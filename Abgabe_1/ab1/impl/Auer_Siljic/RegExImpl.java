@@ -1,4 +1,4 @@
-package ab1.impl.NACHNAMEN;
+package ab1.impl.Auer_Siljic;
 
 import ab1.RegEx;
 
