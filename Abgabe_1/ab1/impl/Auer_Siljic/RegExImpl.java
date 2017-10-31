@@ -1,7 +1,6 @@
 package ab1.impl.Auer_Siljic;
 
 import ab1.RegEx;
-import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 
 public class RegExImpl implements RegEx {
 
@@ -17,9 +16,9 @@ public class RegExImpl implements RegEx {
 
 	@Override
 	public String getRegexEmail() {
-
-		return null;
-	}
+        // TODO Auto-generated method stub
+        return "([a-zA-Z0-9.-]*)\\@(([a-z]*)(.*))";
+    }
 
 	@Override
 	public String getRegexURL() {
@@ -30,20 +29,20 @@ public class RegExImpl implements RegEx {
 	@Override
 	public String multiMatch1() {
 		// TODO Auto-generated method stub
-		return null;
-	}
+        return "[a-z]*(foo)[a-z]*";
+    }
 
 	@Override
 	public String multiMatch2() {
 		// TODO Auto-generated method stub
-		return null;
-	}
+        return "([a-z]*|[A-Z]*)(ick)";
+    }
 
 	@Override
 	public String multiMatch3() {
 		// TODO Auto-generated method stub
-		return null;
-	}
+        return "(([a-z]*)(fu))";
+    }
 
 	@Override
 	public String multiMatch4() {
