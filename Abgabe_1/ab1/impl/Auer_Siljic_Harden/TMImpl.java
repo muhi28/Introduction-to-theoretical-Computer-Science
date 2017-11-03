@@ -137,18 +137,18 @@ public class TMImpl implements TM {
 	    List<TMConfig> list = new ArrayList<TMConfig>();
 
 	    for (int i=0; i<tapes.size(); i++) {
-			list.addAll( getTMConfig(i) );
+			list.add(getTMConfig(i));
 		}
 
 		return this.isCrashed() ? null : list;
 	}
 
 	@Override
-	public List<TMConfig> getTMConfig(int tape) {
-        char[] left = new char[head-1];
-        for (int i=0; i<left.length; i++) {
-            left[i] = tapes.get(tape).get(i);
-        }
+	public TMConfig getTMConfig(int tape) {
+		char[] left = new char[head - 1];
+		for (int i = 0; i < left.length; i++) {
+			left[i] = tapes.get(tape).get(i);
+		}
         char headChar = tapes.get(tape).get(head);
         char[] right = new char[tapes.get(tape).size()-head];
         for (int i=0; i<right.length; i++) {
@@ -159,7 +159,7 @@ public class TMImpl implements TM {
         TMConfig config = new TMConfig(left, headChar, right);
 		list.add(config);
 
-		return this.isCrashed() ? null : list;
+		return this.isCrashed() ? null : config;
 	}
 
 }

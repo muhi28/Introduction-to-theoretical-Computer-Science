@@ -147,7 +147,7 @@ public interface TM {
 	 * @param tape
 	 * @return Konfiguration des angegebenen Bandes
 	 */
-	public List<TMConfig> getTMConfig(int tape);
+	public TMConfig getTMConfig(int tape);
 
 	/**
 	 * @author Raphael Wigoutschnigg
