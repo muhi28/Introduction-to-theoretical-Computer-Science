@@ -16,7 +16,8 @@ public class RegExImpl implements RegEx {
 
 	@Override
 	public String getRegexURL() {
-		return "([http|https|ftp])://"+getRegexDomainName()+"[0-9]{4}";
+		//return "(((http)|(https)|(ftp))\\:\\/\\/[a-z]+\\.[a-z]+(\\.[a-z]+)?(\\:[0-9]+\\/?)?([a-z]+(((.)|(\\/))?)([a-z]+)?){0,})";
+		return null;
 	}
 
 	@Override
@@ -24,9 +25,25 @@ public class RegExImpl implements RegEx {
         return "[a-z]*(foo)[a-z]*";
     }
 
+
+	/**
+	 * Geben Sie eine RegEx an, die folgende Zeichenketten erkennt: fu, tofu, snafu
+	 *
+	 * Folgende Zeichenketten sollen nicht erkannt werden: futz, fusillade, functional,
+	 * discombobulated
+	 *         testGoodList(regEx,
+	 Arrays.asList("Mick", "Rick", "allocochick", "backtrick", "bestick", "candlestick", "counterprick",
+	 "heartsick", "lampwick", "lick", "lungsick", "potstick", "quick", "rampick", "rebrick",
+	 "relick", "seasick", "slick", "tick", "unsick", "upstick"));
+	 testBadList(regEx,
+	 Arrays.asList("Kickapoo", "Nickneven", "Rickettsiales", "billsticker", "borickite", "chickell",
+	 "fickleness", "finickily", "kilbrickenite", "lickpenny", "mispickel", "quickfoot", "quickhatch",
+	 "ricksha", "rollicking", "slapsticky", "snickdrawing", "sunstricken", "tricklingly", "unlicked",
+	 "unnickeled")); ~~~~~~~~~~ ?????????
+	 */
 	@Override
 	public String multiMatch2() {
-        return "([a-z]*|[A-Z]*)(ick)";
+        return "^[a-zA-Z]+(ick)$";
     }
 
 	@Override
