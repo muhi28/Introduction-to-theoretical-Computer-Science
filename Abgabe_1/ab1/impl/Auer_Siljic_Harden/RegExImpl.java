@@ -4,20 +4,14 @@ import ab1.RegEx;
 
 public class RegExImpl implements RegEx {
 
-	/**
-	 * Domain-Name ohne Umlaute und Sonderzeichen (vereinfachte Form). Nur
-	 * Kleinbuchstaben. TLD mit 2 oder 3 Zeichen.
-	 *
-	 */
 	@Override
 	public String getRegexDomainName() {
-
 		return "([w]{3}(\\.){0,1}[a-z]*(\\.){0,1}\\.[a-z]{2,3})|([a-z]*)\\.[a-z]{2,3}|([a-z]*\\.[a-z]*)\\.[a-z]{2,3}";
 	}
 
 	@Override
 	public String getRegexEmail() {
-        return "([a-zA-Z0-9.-]*)\\@(([a-z]*)(.*))";
+		return "([a-z]+@[a-z]*\\.[a-z]{2,3})|([a-z]+\\.[a-z]+@[a-z]+\\.[a-z]{2,3})|([a-z]+\\-[a-z]+@[a-z]+\\.[a-z]{2,3})";
     }
 
 	@Override
