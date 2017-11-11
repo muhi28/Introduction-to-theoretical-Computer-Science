@@ -25,30 +25,20 @@ public class RegExImpl implements RegEx {
         return "[a-z]*(foo)[a-z]*";
     }
 
+	@Override
+	public String multiMatch2() {
+        return "^[a-zA-Z]+(ick)$";
+    }
 
 	/**
 	 * Geben Sie eine RegEx an, die folgende Zeichenketten erkennt: fu, tofu, snafu
 	 *
 	 * Folgende Zeichenketten sollen nicht erkannt werden: futz, fusillade, functional,
 	 * discombobulated
-	 *         testGoodList(regEx,
-	 Arrays.asList("Mick", "Rick", "allocochick", "backtrick", "bestick", "candlestick", "counterprick",
-	 "heartsick", "lampwick", "lick", "lungsick", "potstick", "quick", "rampick", "rebrick",
-	 "relick", "seasick", "slick", "tick", "unsick", "upstick"));
-	 testBadList(regEx,
-	 Arrays.asList("Kickapoo", "Nickneven", "Rickettsiales", "billsticker", "borickite", "chickell",
-	 "fickleness", "finickily", "kilbrickenite", "lickpenny", "mispickel", "quickfoot", "quickhatch",
-	 "ricksha", "rollicking", "slapsticky", "snickdrawing", "sunstricken", "tricklingly", "unlicked",
-	 "unnickeled")); ~~~~~~~~~~ ?????????
 	 */
 	@Override
-	public String multiMatch2() {
-        return "^[a-zA-Z]+(ick)$";
-    }
-
-	@Override
 	public String multiMatch3() {
-        return "(([a-z]*)(fu))";
+        return "^[a-z]*(fu)$";
     }
 
 	/**
