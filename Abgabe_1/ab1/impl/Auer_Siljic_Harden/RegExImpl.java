@@ -22,7 +22,9 @@ public class RegExImpl implements RegEx {
 	 */
 	@Override
 	public String getRegexURL() {
-		return "(http)|(https)|(https)://[a-zA-Z0-9.-/]+";
+			// Todo:
+		return "((http)|(https)|(ftp))://([a-zA-Z0-9]+([.-/]))+";
+		// return "(http)|(https)|(https)://((www).)?\\([a-zA-Z]+[a-z]+.[a-z]{2,3})(/[a-z]+.[a-z]+)?\\";
 		//return "(((http)|(https)|(ftp))\\:\\/\\/[a-z]+\\.[a-z]+(\\.[a-z]+)?(\\:[0-9]+\\/?)?([a-z]+(((.)|(\\/))?)([a-z]+)?){0,})";
 	}
 
@@ -45,6 +47,6 @@ public class RegExImpl implements RegEx {
 
 	@Override
 	public String multiMatch4() {
-		return "";
+		return "((\\()?\\\\\\\\w(\\+|\\*)(\\?)?(\\))?)(\\\\\\\\[0-9])?|(a\\{[0-9]\\}(\\|)?)+|(\\\\\\\\[?]{3})|(a\\{[0-4],[5-9]\\})|(-[+-]*)|(\\(\\\\\\\\[a-z]*\\)\\*\\?)|(\\[[A-L]\\-[K-Z][0-4]\\-[5-9]\\]\\+)|(\\[a\\-[fk]+\\-[ov]+\\-z\\]\\*)|(\\(\\?\\:\\[[a-z]+\\]\\+\\)\\\\\\\\1\\+)|(\\[a\\\\\\\\\\-z\\\\\\\\\\-9\\])|(\\(\\\\\\\\001\\)\\\\\\\\1)|(\\(\\\\\\\\2\\)\\\\\\\\1\\\"\\)\\))";
 	}
 }
