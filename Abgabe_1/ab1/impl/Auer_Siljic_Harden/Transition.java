@@ -3,16 +3,21 @@ package ab1.impl.Auer_Siljic_Harden;
 import ab1.TM;
 
 public class Transition {
-    private int tape;
+    private int tapeRead;
+    private int tapeWrite;
+    private int tapeMove;
     private int fromState;
     private int toState;
     private char symbolRead;
     private char symbolWrite;
     private ab1.TM.Movement movement;
 
-    public Transition(int tape, int fromState, int toState, char symbolRead, char symbolWrite, TM.Movement movement) {
-        this.tape = tape;
+    public Transition(int fromState, int tapeRead, char symbolRead, int toState, int tapeWrite, char symbolWrite, int tapeMove, TM.Movement movement) {
+
+        this.tapeRead = tapeRead;
+        this.tapeWrite = tapeWrite;
         this.fromState = fromState;
+        this.tapeMove = tapeMove;
         this.toState = toState;
         this.symbolRead = symbolRead;
         this.symbolWrite = symbolWrite;
@@ -23,12 +28,28 @@ public class Transition {
         return fromState != this.fromState || symbolRead != this.symbolRead;
     }
 
-    public int getTape() {
-        return tape;
+    public int getTapeRead() {
+        return tapeRead;
     }
 
-    public void setTape(int tape) {
-        this.tape = tape;
+    public void setTapeRead(int tapeRead) {
+        this.tapeRead = tapeRead;
+    }
+
+    public int getTapeWrite() {
+        return tapeWrite;
+    }
+
+    public void setTapeWrite(int tapeWrite) {
+        this.tapeWrite = tapeWrite;
+    }
+
+    public int getTapeMove() {
+        return tapeMove;
+    }
+
+    public void setTapeMove(int tapeMove) {
+        this.tapeMove = tapeMove;
     }
 
     public int getFromState() {

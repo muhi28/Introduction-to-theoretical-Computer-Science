@@ -9,79 +9,88 @@ import ab1.TM;
 
 public class TMImpl implements TM {
 
-    private ArrayList<ArrayList<Character>> tapes = new ArrayList<ArrayList<Character>>();
+
+    private ArrayList<TMConfig> tapes = new ArrayList<>();
     private ArrayList<Transition> transitions = new ArrayList<Transition>();
     private Set<Character> symbols = null;
     private Set<Integer> states = new TreeSet<Integer>();
+    private ArrayList<Character> left = new ArrayList<>();
+    private ArrayList<Character> right = new ArrayList<>();
 
-    private int head = 0;
-    private int state = 0;
-    private int tape = 0;
+
+    private int state;
+    private int numTapes;
+
+    private STATE currentState;
+
+    private char below;
+
+    private enum STATE {
+        HALT,
+        CRASHED
+    }
 
 	@Override
 	public void reset() {
-	    head = 0;
-	    state = 0;
-		tape = 0;
-	    tapes.clear();
-	    tapes.add(new ArrayList<Character>());
-	    states.clear();
-	    states.add(0);
-	    transitions.clear();
-	}
+        state = 0;
+        numTapes = 1;
+
+        tapes.clear();
+        tapes.add(new TMConfig(new char[0], '#', new char[0]));
+
+        states.clear();
+        states.add(0);
+
+        transitions.clear();
+    }
 
 	@Override
 	public void setNumberOfTapes(int numTapes) throws IllegalArgumentException {
-	    if (numTapes < 1) throw new IllegalArgumentException();
 
-	    if (tapes.size() < numTapes) {
-			for (int i=0; i < tapes.size() - numTapes; i++) {
-				tapes.remove(0);
-			}
-		} else {
-			for (int i=0; i < numTapes-tapes.size(); i++) {
-				tapes.add(new ArrayList<Character>());
-			}
-		}
+        if (numTapes < 1) throw new IllegalArgumentException("Anzahl an Bändern zu klein !!!");
+
+        this.numTapes = numTapes;
+
 	}
 
 	@Override
 	public void setSymbols(Set<Character> symbols) throws IllegalArgumentException {
-	    if (!symbols.contains('#')) throw new IllegalArgumentException();
 
-	    this.symbols = symbols;
-	}
+        if (!(symbols.contains('#'))) throw new IllegalArgumentException("Set der Symbole beinhaltet '#' nicht !!!");
+
+        this.symbols = symbols;
+    }
 
 	@Override
 	public Set<Character> getSymbols() {
-		return this.symbols;
-	}
+        return symbols;
+    }
 
 	@Override
-	public void addTransition(int tape, int fromState, char symbolRead, int toState, char symbolWrite,
-			Movement movement) throws IllegalArgumentException {
-	    for (Transition t: transitions) {
-	    	if (!t.checkTransition(fromState, symbolRead)) throw new IllegalArgumentException();
-		}
-	    if (fromState == 0 && symbolRead != 0 ||
-				!symbols.contains(symbolRead) ||
-				!symbols.contains(symbolWrite) ||
-				tape >= tapes.size()) throw new IllegalArgumentException();
+    public void addTransition(int fromState, int tapeRead, char symbolRead, int toState, int tapeWrite,
+                              char symbolWrite, int tapeMove, Movement movement) throws IllegalArgumentException {
 
-	    states.add(toState);
+        if (fromState == 0) {
+            currentState = STATE.CRASHED;
 
-	    transitions.add(new Transition(tape, fromState, toState, symbolRead, symbolWrite, movement));
-	}
+            throw new IllegalArgumentException("Keine Transition von Haltezustand aus möglich !!!");
+        }
+
+        transitions.add(new Transition(fromState, tapeRead, symbolRead, toState, tapeWrite, symbolWrite, tapeMove, movement));
+
+        states.add(fromState);
+        states.add(toState);
+    }
 
 	@Override
 	public Set<Integer> getStates() {
-	    return states;
-	}
+        return states;
+    }
 
 	@Override
 	public int getNumberOfTapes() {
-	    return tapes.size();
-	}
+        return tapes.size();
+    }
 
 	@Override
 	public void setInitialState(int state) {
@@ -90,76 +99,140 @@ public class TMImpl implements TM {
 
 	@Override
 	public void setInitialTapeContent(int tape, char[] content) {
-		tapes.get(tape).clear();
-		for (int i=0; i<content.length; i++) {
-			tapes.get(tape).add(content[i]);
-		}
-	}
+
+        tapes.add(tape, new TMConfig(content, '#', new char[0]));
+    }
 
 	@Override
 	public void doNextStep() throws IllegalStateException {
-	    if (state == 0) throw new IllegalStateException();
 
-	    char symbol = tapes.get(tape).get(head);
+        if (state == 0) {
+            currentState = STATE.CRASHED;
+            throw new IllegalStateException("Maschine befindet sich bereits im Haltezustand !!!");
+        }
 
-	    Transition transition = null;
-	    for (Transition t: transitions) {
-	    	if (t.getFromState() == state &&
-					t.getSymbolRead() == symbol) {
-				transition = t;
-				break;
+        boolean found = false;
+
+        Transition trans = null;
+
+        for (Transition transition : transitions) {
+
+            if (transition.getFromState() == state && transition.getSymbolRead() == tapes.get(transition.getTapeRead()).getBelowHead()) {
+
+                found = true;
+                trans = transition;
+
+                TMConfig writeTape = tapes.get(transition.getTapeWrite());
+
+                tapes.set(transition.getTapeWrite(), writeTape);
+
+
+                TMConfig moveTape = tapes.get(transition.getTapeMove());
+
+                left = changeToList(moveTape.getLeftOfHead());
+                right = changeToList(moveTape.getRightOfHead());
+                below = moveTape.getBelowHead();
+
+                makeTrans(transition.getMovement(), left, below, right);
+
 			}
 		}
 
-		if (transition == null) throw new IllegalStateException();
+        if (!found) {
+            currentState = STATE.CRASHED;
 
-		state = transition.getToState();
-		if (transition.getSymbolWrite() != 0)
-			tapes.get(tape).set(head, transition.getSymbolWrite());
-		if (transition.getMovement() == Movement.Left) head--;
-		if (transition.getMovement() == Movement.Right) head++;
+            throw new IllegalStateException("Transition nicht vorhanden !!!");
+        }
 
-		if (head < 0) throw new IllegalStateException();
-	}
+        updateTM(trans, left, below, right);
+    }
+
+    private void updateTM(Transition transition, ArrayList<Character> left, char below, ArrayList<Character> right) {
+
+        char[] leftData = new char[left.size()];
+        char[] rightData = new char[right.size()];
+
+        for (int i = 0; i < leftData.length; i++) {
+
+            leftData[i] = left.get(i);
+        }
+
+        for (int i = 0; i < rightData.length; i++) {
+            rightData[i] = right.get(i);
+        }
+
+        tapes.set(transition.getTapeMove(), new TMConfig(leftData, below, rightData));
+    }
+
+    private void makeTrans(Movement movement, ArrayList<Character> left, char below, ArrayList<Character> right) {
+
+        if (movement == Movement.Left) {
+
+            if (left.size() == 0) {
+                currentState = STATE.CRASHED;
+                return;
+            }
+
+            right.add(0, below);
+            below = left.get(left.size() - 1);
+            left.remove(left.size() - 1);
+
+        } else if (movement == Movement.Right) {
+
+            if (right.isEmpty()) {
+                right.add(0, '#');
+            }
+
+            left.add(below);
+            below = right.get(0);
+            right.remove(0);
+        }
+
+    }
+
+    private ArrayList<Character> changeToList(char[] data) {
+
+        ArrayList<Character> output = new ArrayList<>();
+
+        for (char c : data) {
+
+            output.add(c);
+        }
+
+        return output;
+    }
 
 	@Override
 	public boolean isHalt() {
-		return state == 0;
-	}
+
+        return getActState() == 0;
+    }
 
 	@Override
 	public boolean isCrashed() {
-		return head >= tapes.get(tape).size() || !states.contains(state);
+
+		/*
+                - außerhalb der Bänder
+				- keine Transition vorhanden von State mit gelesenem Symbol bla bla blaaaaa
+				- State nicht vorhanden
+		 */
+        return currentState == STATE.CRASHED;
+
 	}
 
 	@Override
 	public List<TMConfig> getTMConfig() {
-	    List<TMConfig> list = new ArrayList<TMConfig>();
-
-	    for (int i=0; i<tapes.size(); i++) {
-			list.add(getTMConfig(i));
-		}
-
-		return this.isCrashed() ? null : list;
-	}
+        return tapes;
+    }
 
 	@Override
 	public TMConfig getTMConfig(int tape) {
-		char[] left = new char[head - 1];
-		for (int i = 0; i < left.length; i++) {
-			left[i] = tapes.get(tape).get(i);
-		}
-        char headChar = tapes.get(tape).get(head);
-        char[] right = new char[tapes.get(tape).size()-head];
-        for (int i=0; i<right.length; i++) {
-            right[i] = tapes.get(tape).get(head + 1 + i); //FIXME Uberlauf wegen +1?
-        }
+        return tapes.get(tape);
+    }
 
-		List<TMConfig> list = new ArrayList<TMConfig>();
-        TMConfig config = new TMConfig(left, headChar, right);
-		list.add(config);
-
-		return this.isCrashed() ? null : config;
-	}
+    @Override
+    public int getActState() {
+        return state;
+    }
 
 }
