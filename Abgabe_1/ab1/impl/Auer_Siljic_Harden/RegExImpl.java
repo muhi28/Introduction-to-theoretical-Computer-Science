@@ -47,9 +47,10 @@ public class RegExImpl implements RegEx {
 	@Override
 	public String multiMatch4() {
 
-		String str = "";
+		/*
+        String str = "";
 		try {
-			FileReader readerOfDespair = new FileReader("/home/igor/Misc/Introduction-to-theoretical-Computer-Science/Abgabe_1/ab1/impl/Auer_Siljic_Harden/ultraregex");
+			FileReader readerOfDespair = new FileReader(new File("ultraregex").getAbsolutePath());
 //			FileReader readerOfDespair = new FileReader("ab1/impl/Auer_Siljic_Harden/ultraregex");
 			BufferedReader bufferedFailer = new BufferedReader(readerOfDespair);
 
@@ -58,8 +59,7 @@ public class RegExImpl implements RegEx {
             readerOfDespair.close();
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-
+		}*/
 
 //		Regex r = "(\\w(\\+|\\*)|(a\{[0-9]\}(\|)?)+";
 //	    String str =
@@ -70,6 +70,6 @@ public class RegExImpl implements RegEx {
 //		String str = "\\w\\+ | \\w* | a{1}|a{3}|a{9} | \\??? | a{1,8} | - | -+-+-+-+-+ | " +
 //				"(\\w+?)\\7 | (\\ufacdf)*? | [A-Z0-9]+ | [a-fk-ov-z]* | (?:[aeiou]+)\\1+" +
 //				"| [a\\-z\\-9] | (\\001)\\1 | (\\2)\\1";
-		return str;
-	}
+        return "w";
+    }
 }
