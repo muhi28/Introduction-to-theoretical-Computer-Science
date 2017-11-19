@@ -109,7 +109,7 @@ public class TMImpl implements TM {
     @Override
     public void doNextStep() throws IllegalStateException {
 
-        if (state == 0) {
+        if (state == HALT_STATE) {
             currentState = STATE.CRASHED;
             throw new IllegalStateException("Maschine befindet sich bereits im Haltezustand !!!");
         }
