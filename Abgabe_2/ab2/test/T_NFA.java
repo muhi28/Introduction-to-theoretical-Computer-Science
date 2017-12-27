@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class T_NFA {
-    FAFactoryImpl FA;
+    FAFactoryImpl FA = new FAFactoryImpl();
     NFA nfa1, nfa2;
     int initState1, initState2;
     int numStates1, numStates2;
@@ -24,9 +24,13 @@ public class T_NFA {
     public void NFA_Creation(){
         initState1 = 0;
         numStates1 = 3;
-        characters1 = new TreeSet<Character>(Arrays.asList('a', 'b'));
+        characters1 = new TreeSet<>(Arrays.asList('a', 'b'));
         acceptingStates1 = new TreeSet<>(Arrays.asList(2));
-        nfa1 = FA.createNFA(numStates1, characters1, acceptingStates1, initState1);
+        try{
+            nfa1 = FA.createNFA(numStates1, characters1, acceptingStates1, initState1);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
 
         nfa1.setTransition(0, "a", 1);
         nfa1.setTransition(0, "a", 2);

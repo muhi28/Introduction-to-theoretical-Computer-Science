@@ -14,6 +14,14 @@ public class NfaImpl implements NFA {
     private Set<Integer> acceptingStates;
     private int initialState;
 
+    public NfaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState)
+    {
+        this.transitions = (Set<String>[][]) new TreeSet<?>[numStates][numStates];
+        this.characters = characters;
+        this.acceptingStates = acceptingStates;
+        this.initialState= initialState;
+    }
+
     public NfaImpl() {
         transitions = (Set<String>[][]) new TreeSet<?>[100][100];
         characters = new TreeSet<Character>();
