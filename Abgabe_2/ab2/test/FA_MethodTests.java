@@ -8,6 +8,4 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({T_NFA.class, T_DFA.class, T_RSA.class})
-public class FA_MethodTests {
-
-}
+public class FA_MethodTests { }

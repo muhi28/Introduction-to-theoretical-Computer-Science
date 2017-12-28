@@ -139,7 +139,7 @@ public class T_NFA {
         // FIXME :: Test 3 -- On nonexistant transition?
         Assert.assertEquals(nfa3.getTransitions()[0][1], asTreeSet(Arrays.asList("a")));
         Assert.assertEquals(nfa3.getTransitions()[1][2], asTreeSet(Arrays.asList("")));    // "" = ε
-        Assert.assertNotEquals(nfa3.getTransitions()[0][0], asTreeSet(Arrays.asList("")));
+        Assert.assertNotEquals(nfa3.getTransitions()[0][0], asTreeSet(Arrays.asList()));
 
         Assert.assertTrue(nfa3.accepts("a"));
         Assert.assertTrue(nfa3.accepts("acccccccccccccccccccccccccccccccccc"));
