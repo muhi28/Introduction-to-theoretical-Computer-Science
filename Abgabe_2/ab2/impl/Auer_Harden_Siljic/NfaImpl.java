@@ -73,28 +73,9 @@ public class NfaImpl implements NFA {
             if (!characters.contains(c)) throw new IllegalCharacterException();
         }
 
-        System.out.printf("From: %d -- To: %d // Using: %s\n", fromState, toState, s);
-        System.out.printf("Transitions.length :: " + transitions.length + "\tTransitions[0].length:: " + transitions[0].length + "\n");
-
-        if(transitions == null){System.out.println("Transitions is null.");}
-        else{ System.out.println("Transitions is not null."); }
-        if(s instanceof String){  System.out.print("s is of type String, as expected.\n"); }
-        else{ System.out.println("s is not of type String. Unexpected behaviour."); }
-        for(int i = 0; i < transitions.length; i++)
-        {
-            for(int j = 0; j < transitions[i].length; j++)
-            {
-                try{
-                    transitions[i][0].add("5");
-                }catch(Exception e){
-                    System.err.print("Caught error :: " + e + "\n");
-                }
-                System.out.print("i:"+i+"\tj:"+j+"\t\t"+ "Element::" + transitions[i][j]);
-                if(transitions[i][j] == null){ System.out.print( " -- is null\n"); }
-                else{ System.out.print("-- is not null\n"); }
-            }
+        if(transitions[fromState][toState] == null){
+            transitions[fromState][toState] = new TreeSet<String>();
         }
-
         transitions[fromState][toState].add(s);
     }
 
