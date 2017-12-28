@@ -43,6 +43,7 @@ public class T_NFA {
         nfa1.setTransition(2, "b", 0);
         nfa1.setTransition(2, "ab", 1);
 
+
 /*  Sample 1.:
     0:    0   --> a -->   1   0   --> b -->   0
           0   --> a -->   2
@@ -80,13 +81,13 @@ public class T_NFA {
         Assert.assertTrue(nfa1.isAcceptingState(2));
         Assert.assertFalse(nfa1.isAcceptingState(0));
 
+        Assert.assertEquals(nfa1.getNextStates(0, "a"), asTreeSet(Arrays.asList(1,2)));
         Assert.assertEquals(nfa1.getNextStates(2,"a"), asTreeSet(Arrays.asList(2)));
         Assert.assertEquals(nfa1.getNextStates(2,"ab"), asTreeSet(Arrays.asList(1)));
         Assert.assertNotEquals(nfa1.getNextStates(2, "a"), asTreeSet(Arrays.asList(1,2)));
 
-        // FIXME :: Testing on Transitions -- 2nd. Test: On nonexistant transition?
         Assert.assertEquals(nfa1.getTransitions()[0][1], asTreeSet(Arrays.asList("a")));
-        Assert.assertEquals(nfa1.getTransitions()[1][2], asTreeSet(Arrays.asList(null)));
+        Assert.assertNull(nfa1.getTransitions()[1][2]);
         Assert.assertNotEquals(nfa1.getTransitions()[0][2], asTreeSet(Arrays.asList("a", "b")));
 
         nfa1.clearTransitions(2, "ab");
@@ -98,6 +99,27 @@ public class T_NFA {
 
     @Test
     public void NFA_Union(){
+        Assert.assertFalse(true);
+    }
+
+
+    @Test
+    public void NFA_Intersection()
+    {
+// TODO ::
+        Assert.assertFalse(true);
+    }
+
+    @Test
+    public void NFA_Complement()
+    {
+// TODO ::
+        Assert.assertFalse(true);
+    }
+
+    @Test
+    public void NFA_Concatination()
+    {
         initState1 = 0;     initState2 = 0;
         numStates1 = 2;     numStates2 = 1;
         characters1 = new TreeSet<Character>(Arrays.asList('a'));
@@ -119,7 +141,7 @@ public class T_NFA {
                                 |
 ☩*/
 
-        NFA nfa3 = nfa1.union(nfa2);
+        NFA nfa3 = nfa1.concat(nfa2);
 
 /* Sample 2.union:
     +---+              +---+            +---+ --⬎
@@ -131,41 +153,19 @@ public class T_NFA {
          * Following commentaries are probably depending on implementation on union
          */
         Assert.assertEquals(nfa3.getSymbols(), asTreeSet(Arrays.asList('a','c')));
-        //Assert.assertEquals(nfa3.getAcceptingStates(), asTreeSet(Arrays.asList(2)));
+        Assert.assertEquals(nfa3.getAcceptingStates(), asTreeSet(Arrays.asList(2)));
         Assert.assertEquals(nfa3.getInitialState(), 0);
-        //Assert.assertTrue(nfa3.isAcceptingState(2));
+        Assert.assertTrue(nfa3.isAcceptingState(2));
         Assert.assertFalse(nfa3.isAcceptingState(1));
 
         // FIXME :: Test 3 -- On nonexistant transition?
         Assert.assertEquals(nfa3.getTransitions()[0][1], asTreeSet(Arrays.asList("a")));
         Assert.assertEquals(nfa3.getTransitions()[1][2], asTreeSet(Arrays.asList("")));    // "" = ε
-        Assert.assertNotEquals(nfa3.getTransitions()[0][0], asTreeSet(Arrays.asList()));
+        Assert.assertNull(nfa3.getTransitions()[0][0]);
 
         Assert.assertTrue(nfa3.accepts("a"));
         Assert.assertTrue(nfa3.accepts("acccccccccccccccccccccccccccccccccc"));
         Assert.assertFalse(nfa3.accepts("cac"));
-    }
-
-
-    @Test
-    public void NFA_Intersection()
-    {
-// TODO ::
-        Assert.assertFalse(true);
-    }
-
-    @Test
-    public void NFA_Complement()
-    {
-// TODO ::
-        Assert.assertFalse(true);
-    }
-
-    @Test
-    public void NFA_Concatination()
-    {
-// TODO ::
-        Assert.assertFalse(true);
     }
     @Test
     public void NFA_KleeneStar()

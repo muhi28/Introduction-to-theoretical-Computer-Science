@@ -101,13 +101,19 @@ public class NfaImpl implements NFA {
     private Set<Integer> getNextStatesStep(Set<Integer> set, int state, String s) {
         for (int i = 0; i < transitions[0].length; i++) {
             if (!set.contains(i)) {
-                if (!s.isEmpty() && transitions[state][i].contains(s)) {
-                    set.add(i);
-                    set.addAll(getNextStatesStep(set, i, ""));
-                }
-                if (transitions[state][i].contains("")) {
-                    set.add(i);
-                    set.addAll(getNextStatesStep(set, i, s));
+                try{
+                    if (!s.isEmpty() && transitions[state][i].contains(s)) {
+                        set.add(i);
+                        set.addAll(getNextStatesStep(set, i, ""));
+                    }
+                    if (transitions[state][i].contains("")) {
+                        set.add(i);
+                        set.addAll(getNextStatesStep(set, i, s));
+                    }
+                }catch(NullPointerException e)
+                {
+                    System.out.println("Predefined Behaviour -- Undefined Transitions are Null.");
+                    System.err.print(e);
                 }
             }
         }
@@ -136,10 +142,15 @@ public class NfaImpl implements NFA {
         Set<String>[][] newTransitions = this.transitions;
         for (int i=0; i<a.getTransitions().length; i++) {
             for (int n=0; n<a.getTransitions()[0].length; n++) {
-                newTransitions[i][n].addAll(a.getTransitions()[i][n]);
+                try{
+                    newTransitions[i][n].addAll(a.getTransitions()[i][n]);
+                }catch(NullPointerException e){
+                    System.out.println("Predefined Behaviour -- Undefined transitions are null");
+
+                }
+
             }
         }
-
 
         return new NfaImpl(chars, newTransitions, this.initialState);
     }
@@ -178,6 +189,10 @@ public class NfaImpl implements NFA {
         NfaImpl newNfa = new NfaImpl(chars, newTransitions, this.initialState);
         for (Integer fromState: this.getAcceptingStates()) {
             newNfa.setTransition(fromState, "", a.getInitialState()+offset);
+        }
+
+        for(Integer accept: a.getAcceptingStates()){
+
         }
         newNfa.setAcceptingStates(a.getAcceptingStates());
 
