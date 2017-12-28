@@ -19,7 +19,7 @@ public class T_NFA {
     Set<Integer> acceptingStates1, acceptingStates2;
 
     /**
-     * Test trivialities of the correct creation of an NFA.
+     * Tests every monotonous method available to one and one NFA only
      */
     @Test
     public void NFA_Creation(){
@@ -81,16 +81,16 @@ public class T_NFA {
         Assert.assertFalse(nfa1.isAcceptingState(0));
 
         Assert.assertEquals(nfa1.getNextStates(2,"a"), asTreeSet(Arrays.asList(2)));
-        Assert.assertEquals(nfa1.getNextStates(2,"ab"), (Arrays.asList(1)));
-        Assert.assertNotEquals(nfa1.getNextStates(2, "a"), (Arrays.asList(1,2)));
+        Assert.assertEquals(nfa1.getNextStates(2,"ab"), asTreeSet(Arrays.asList(1)));
+        Assert.assertNotEquals(nfa1.getNextStates(2, "a"), asTreeSet(Arrays.asList(1,2)));
 
         // FIXME :: Testing on Transitions -- 2nd. Test: On nonexistant transition?
-        Assert.assertEquals(nfa1.getTransitions()[0][1], Arrays.asList("a"));
-        Assert.assertEquals(nfa1.getTransitions()[1][2], Arrays.asList(null));
-        Assert.assertNotEquals(nfa1.getTransitions()[0][2], Arrays.asList("a", "b"));
+        Assert.assertEquals(nfa1.getTransitions()[0][1], asTreeSet(Arrays.asList("a")));
+        Assert.assertEquals(nfa1.getTransitions()[1][2], asTreeSet(Arrays.asList(null)));
+        Assert.assertNotEquals(nfa1.getTransitions()[0][2], asTreeSet(Arrays.asList("a", "b")));
 
         nfa1.clearTransitions(2, "ab");
-        Assert.assertNotEquals(nfa1.getNextStates(2, "ab"), Arrays.asList(1));
+        Assert.assertNotEquals(nfa1.getNextStates(2, "ab"), asTreeSet(Arrays.asList(1)));
 
         // TODO: Find some test to fuck up numStates
         Assert.assertNotEquals(nfa1.getNumStates(), 2);
@@ -110,6 +110,7 @@ public class T_NFA {
 
         nfa1.setTransition(0,"a",1);
         nfa2.setTransition(0,"c",0);
+
 /* Sample 2:
     NFA1:                       | NFA2:
     +---+              +---+    |   +---+ --⬎
@@ -129,16 +130,16 @@ public class T_NFA {
         /** FIXME :: Basic tests on NFA3 -- Needs confirmation
          * Following commentaries are probably depending on implementation on union
          */
-        Assert.assertEquals(nfa3.getSymbols(), Arrays.asList('a','c'));
-        //Assert.assertEquals(nfa3.getAcceptingStates(), Arrays.asList(2));
+        Assert.assertEquals(nfa3.getSymbols(), asTreeSet(Arrays.asList('a','c')));
+        //Assert.assertEquals(nfa3.getAcceptingStates(), asTreeSet(Arrays.asList(2)));
         Assert.assertEquals(nfa3.getInitialState(), 0);
         //Assert.assertTrue(nfa3.isAcceptingState(2));
         Assert.assertFalse(nfa3.isAcceptingState(1));
 
         // FIXME :: Test 3 -- On nonexistant transition?
-        Assert.assertEquals(nfa3.getTransitions()[0][1], Arrays.asList("a"));
-        Assert.assertEquals(nfa3.getTransitions()[1][2], Arrays.asList(""));    // "" = ε
-        Assert.assertNotEquals(nfa3.getTransitions()[0][0], Arrays.asList(""));
+        Assert.assertEquals(nfa3.getTransitions()[0][1], asTreeSet(Arrays.asList("a")));
+        Assert.assertEquals(nfa3.getTransitions()[1][2], asTreeSet(Arrays.asList("")));    // "" = ε
+        Assert.assertNotEquals(nfa3.getTransitions()[0][0], asTreeSet(Arrays.asList("")));
 
         Assert.assertTrue(nfa3.accepts("a"));
         Assert.assertTrue(nfa3.accepts("acccccccccccccccccccccccccccccccccc"));
@@ -199,7 +200,7 @@ public class T_NFA {
         nfa1 = FA.createNFA(numStates1, characters1, acceptingStates1, initState1);
 
         nfa1.setTransition(0,"a", 1);
-        nfa1.accepts("a");
+        Assert.assertTrue(nfa1.accepts("a"));
     }
     @Test
     public void NFA_AcceptsNothing()
