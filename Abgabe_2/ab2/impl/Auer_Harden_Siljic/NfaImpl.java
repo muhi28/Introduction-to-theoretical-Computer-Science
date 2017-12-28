@@ -1,7 +1,5 @@
 package ab2.impl.Auer_Harden_Siljic;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -112,7 +110,7 @@ public class NfaImpl implements NFA {
 
     @Override
     public int getNumStates() {
-        int num = 0;
+/*        int num = 0;
         for (int f = 0; f < transitions.length; f++) {
             for (int t = 0; t < transitions[0].length; t++) {
                 if (transitions[f][t].size() > 0) num++;
@@ -120,6 +118,8 @@ public class NfaImpl implements NFA {
         }
 
         return num;
+*/
+    return transitions.length;
     }
 
     @Override
