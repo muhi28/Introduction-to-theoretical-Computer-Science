@@ -39,6 +39,10 @@ public class NfaImpl implements NFA {
         acceptingStates = new TreeSet<Integer>();
     }
 
+    public void setSymbols(Set<Character> characters) {
+        this.characters = characters;
+    }
+
     @Override
     public Set<Character> getSymbols() {
         return characters;
@@ -56,6 +60,8 @@ public class NfaImpl implements NFA {
 
     @Override
     public boolean isAcceptingState(int s) throws IllegalStateException {
+        if (s < 0 || s > transitions.length) throw new IllegalStateException();
+
         return acceptingStates.contains(s);
     }
 
@@ -84,6 +90,7 @@ public class NfaImpl implements NFA {
         if (fromState < 0 || fromState >= transitions.length) throw new IllegalStateException("ArrayIndexOutOfBounds");
 
         for (int i=0; i<transitions[0].length; i++) {
+                if (transitions[fromState][i] == null) continue;
                 transitions[fromState][i].remove(s);
         }
     }
