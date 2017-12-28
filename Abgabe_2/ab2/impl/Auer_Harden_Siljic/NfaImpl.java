@@ -1,5 +1,6 @@
 package ab2.impl.Auer_Harden_Siljic;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -112,7 +113,7 @@ public class NfaImpl implements NFA {
                     }
                 }catch(NullPointerException e)
                 {
-                    System.out.println("Predefined Behaviour -- Undefined Transitions are Null.");
+                    System.out.println("Echo::GetNextStatesStep <> Predefined Behaviour -- Undefined Transitions are Null.");
                     System.err.print(e);
                 }
             }
@@ -145,7 +146,7 @@ public class NfaImpl implements NFA {
                 try{
                     newTransitions[i][n].addAll(a.getTransitions()[i][n]);
                 }catch(NullPointerException e){
-                    System.out.println("Predefined Behaviour -- Undefined transitions are null");
+                    System.out.println("ECHO::Union <> Predefined Behaviour -- Undefined transitions are null");
 
                 }
 
@@ -191,10 +192,13 @@ public class NfaImpl implements NFA {
             newNfa.setTransition(fromState, "", a.getInitialState()+offset);
         }
 
-        for(Integer accept: a.getAcceptingStates()){
+        Integer[] acc = new Integer[a.getAcceptingStates().size()]; // SET<Integer>
+        a.getAcceptingStates().toArray(acc);
 
+        for (int i = 0; i < acc.length; i++) {
+            acc[i] += offset;
         }
-        newNfa.setAcceptingStates(a.getAcceptingStates());
+        newNfa.setAcceptingStates(new TreeSet<Integer>(Arrays.asList(acc)));
 
         return newNfa;
     }
@@ -252,20 +256,31 @@ public class NfaImpl implements NFA {
     }
 
     private boolean acceptsRecursive(int s, String w) {
-        String c = w.charAt(0) + "";
-        String ws = w.substring(1);
-
+        String c = "";
+        String ws = "";
+        System.out.println("Echo::AcceptsREEEEEcursive <> W:" + w.length() + "_" + w + "//C:" + c.length() + "_" + c);
+        if (!w.equals("")) {
+            c = String.valueOf(w.charAt(0));
+            ws = w.substring(1);
+        }
         Set<Integer> states = this.getNextStates(s, c);
 
         if (w.isEmpty()) {
+            System.out.println("Echo::Case1");
             for (Integer state: states) {
-                if (acceptingStates.contains(state)) return true;
+                if (acceptingStates.contains(state)) {
+                    System.out.println("Echo::Case1.1");
+                    return true;
+                }
             }
             return false;
         }
 
         for (Integer state: states) {
-            if (acceptsRecursive(state, ws)) return true;
+            if (acceptsRecursive(state, ws)) {
+                System.out.println("Echo::Case2.1");
+                return true;
+            }
         }
         return false;
     }

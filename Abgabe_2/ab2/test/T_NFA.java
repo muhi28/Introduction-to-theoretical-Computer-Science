@@ -164,7 +164,7 @@ public class T_NFA {
         Assert.assertNull(nfa3.getTransitions()[0][0]);
 
         Assert.assertTrue(nfa3.accepts("a"));
-        Assert.assertTrue(nfa3.accepts("acccccccccccccccccccccccccccccccccc"));
+        Assert.assertTrue(nfa3.accepts("ac"));
         Assert.assertFalse(nfa3.accepts("cac"));
     }
     @Test
