@@ -8,6 +8,10 @@ import java.util.TreeSet;
 
 public class DfaImpl extends NfaImpl implements DFA {
 
+    public DfaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
+        super(numStates, characters, acceptingStates, initialState);
+    }
+
     private int currentState;
 
     @Override
@@ -40,7 +44,7 @@ public class DfaImpl extends NfaImpl implements DFA {
             Set<String> transitions = getTransitions()[currentState][i];
             if (transitions != null &&
                     transitions.size() > 0 &&
-                    transitions.contains(c)) {
+                    transitions.contains(c + "")) {
                 return i;
             }
         }

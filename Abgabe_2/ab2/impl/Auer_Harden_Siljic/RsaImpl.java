@@ -9,6 +9,10 @@ import java.util.TreeSet;
 
 public class RsaImpl extends DfaImpl implements RSA {
 
+    public RsaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
+        super(numStates, characters, acceptingStates, initialState);
+    }
+
     @Override
     public RSA minimize() {
         // INIT

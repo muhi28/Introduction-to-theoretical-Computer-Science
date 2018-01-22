@@ -17,18 +17,12 @@ public class NfaImpl implements NFA {
 
     public NfaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState)
     {
-        this.transitions = (Set<String>[][]) new TreeSet<?>[numStates][numStates];
+        initTransitions(numStates);
         this.characters = characters;
         this.acceptingStates = acceptingStates;
         this.initialState= initialState;
     }
 
-    public NfaImpl() {
-        transitions = (Set<String>[][]) new TreeSet<?>[100][100];
-        characters = new TreeSet<Character>();
-        acceptingStates = new TreeSet<Integer>();
-        initialState = 0;
-    }
 
     public NfaImpl(Set<Character> characters, Set<String>[][] transitions, int initialState) {
         this.characters = characters;
@@ -36,6 +30,19 @@ public class NfaImpl implements NFA {
         this.initialState = initialState;
         characters = new TreeSet<Character>();
         acceptingStates = new TreeSet<Integer>();
+    }
+
+    private void initTransitions(int numStates) {
+
+        this.transitions = (Set<String>[][]) new TreeSet<?>[numStates][numStates];
+
+        for (int i = 0; i < this.transitions.length; i++) {
+
+            for (int j = 0; j < this.transitions[i].length; j++) {
+
+                this.transitions[i][j] = new TreeSet<String>();
+            }
+        }
     }
 
     public void setSymbols(Set<Character> characters) {
@@ -153,19 +160,24 @@ public class NfaImpl implements NFA {
             }
         }
 
-        return new NfaImpl(chars, newTransitions, this.initialState);
+        Set<Integer> newSet = new TreeSet<>();
+
+        newSet.addAll(this.getAcceptingStates());
+        newSet.addAll(a.getAcceptingStates());
+
+        //return new NfaImpl(chars, newTransitions, this.initialState);
+        return new NfaImpl(this.getNumStates() + a.getNumStates(), chars, newSet, this.initialState);
+
     }
 
     @Override
     public NFA intersection(NFA a) {
-//        return complement(complement().union(complement(a)));
-        return null;
+        return (this.complement().union(a.complement())).complement();
     }
 
     @Override
     public NFA complement() {
-//        return new NfaImpl().toRSA();
-        return null;
+        return this.toRSA();
     }
 
     @Override

@@ -18,13 +18,15 @@ public class FAFactoryImpl implements FAFactory {
 	@Override
 	public DFA createDFA(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
 		// TODO Auto-generated method stub
-		return null;//new DFA(numStates, characters, acceptingStates, initialState);
+
+
+		return new DfaImpl(numStates, characters, acceptingStates, initialState); //new DFA(numStates, characters, acceptingStates, initialState);
 	}
 
 	@Override
 	public RSA createRSA(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
 		// TODO Auto-generated method stub
-		return null;//new RSA(numStates, characters, acceptingStates, initialState);
+		return new RsaImpl(numStates, characters, acceptingStates, initialState);//new RSA(numStates, characters, acceptingStates, initialState);
 	}
 
 	@Override
