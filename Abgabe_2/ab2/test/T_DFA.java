@@ -1,7 +1,6 @@
 package ab2.test;
 
 import ab2.DFA;
-import ab2.NFA;
 import ab2.impl.Auer_Harden_Siljic.FAFactoryImpl;
 import org.junit.Assert;
 import org.junit.Before;

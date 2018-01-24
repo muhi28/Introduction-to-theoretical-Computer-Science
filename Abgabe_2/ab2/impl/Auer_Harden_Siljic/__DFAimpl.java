@@ -6,9 +6,9 @@ import ab2.fa.exceptions.IllegalCharacterException;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class DfaImpl extends NfaImpl implements DFA {
+public class __DFAimpl extends NfaImpl implements DFA {
 
-    public DfaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
+    public __DFAimpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
         super(numStates, characters, acceptingStates, initialState);
     }
 

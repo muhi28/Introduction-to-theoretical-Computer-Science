@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class RsaImpl extends DfaImpl implements RSA {
+public class __RSAimpl extends __DFAimpl implements RSA {
 
-    public RsaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
+    public __RSAimpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
         super(numStates, characters, acceptingStates, initialState);
     }
 

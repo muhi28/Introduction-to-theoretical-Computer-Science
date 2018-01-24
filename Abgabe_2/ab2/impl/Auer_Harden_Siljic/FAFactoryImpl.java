@@ -20,13 +20,13 @@ public class FAFactoryImpl implements FAFactory {
 		// TODO Auto-generated method stub
 
 
-		return new DfaImpl(numStates, characters, acceptingStates, initialState); //new DFA(numStates, characters, acceptingStates, initialState);
+		return new __DFAimpl(numStates, characters, acceptingStates, initialState); //new DFA(numStates, characters, acceptingStates, initialState);
 	}
 
 	@Override
 	public RSA createRSA(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
 		// TODO Auto-generated method stub
-		return new RsaImpl(numStates, characters, acceptingStates, initialState);//new RSA(numStates, characters, acceptingStates, initialState);
+		return new __RSAimpl(numStates, characters, acceptingStates, initialState);//new RSA(numStates, characters, acceptingStates, initialState);
 	}
 
 	@Override

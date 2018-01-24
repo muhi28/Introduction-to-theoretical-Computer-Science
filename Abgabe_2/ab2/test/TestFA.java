@@ -226,23 +226,14 @@ public class TestFA {
     @Test
     public void NFA_Language_SingleChars() {
         testLanguageNFA1(n1);
-
         testLanguageNFA2(n2);
-
         testLanguageNFA3(n3);
-
         testLanguageNFA4(n4);
-
         testLanguageNFA5(n5);
-
         testLanguageNFA6(n6);
-
         testLanguageNFA7(n7);
-
         testLanguageNFA8(n8);
-
         testLanguageNFA9(n9);
-
         gesamtPunkte++;
     }
 
@@ -1631,7 +1622,6 @@ public class TestFA {
 
     @Test
     public void NFA_Equals() {
-
         List<NFA> nfas = Arrays.asList(n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12);
 
         // Jeder Automat ist zu sich selbst equivalent

@@ -87,7 +87,7 @@ public class T_NFA {
         Assert.assertNotEquals(nfa1.getNextStates(2, "a"), asTreeSet(Arrays.asList(1,2)));
 
         Assert.assertEquals(nfa1.getTransitions()[0][1], asTreeSet(Arrays.asList("a")));
-        Assert.assertNull(nfa1.getTransitions()[1][2]);
+        Assert.assertSame(nfa1.getTransitions()[1][2], asTreeSet(Arrays.asList("")));
         Assert.assertNotEquals(nfa1.getTransitions()[0][2], asTreeSet(Arrays.asList("a", "b")));
 
         nfa1.clearTransitions(2, "ab");

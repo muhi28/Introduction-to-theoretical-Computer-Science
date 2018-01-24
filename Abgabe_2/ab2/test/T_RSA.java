@@ -2,7 +2,7 @@ package ab2.test;
 
 import ab2.RSA;
 import ab2.impl.Auer_Harden_Siljic.FAFactoryImpl;
-import ab2.impl.Auer_Harden_Siljic.RsaImpl;
+import ab2.impl.Auer_Harden_Siljic.__RSAimpl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
