@@ -32,10 +32,12 @@ public class __RSAimpl extends __DFAimpl implements RSA {
         }
 
         // MINIMIZE
-        boolean shrinked = false;
+        boolean shrinked;
         ArrayList<Tup> removed = new ArrayList<>();
 
         do {
+            shrinked = false;
+
             // look at all tuples for redundancies
             for (Tup tup: equivTups) {
                 boolean shouldStay = true;
@@ -63,7 +65,6 @@ public class __RSAimpl extends __DFAimpl implements RSA {
                 removed.clear();
                 shrinked = true;
             }
-
         } while (shrinked);
 
         // UPDATE
