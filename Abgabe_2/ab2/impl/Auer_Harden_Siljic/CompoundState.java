@@ -8,11 +8,12 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class CompoundState implements Comparable {
-    public Set<Integer> thisState;
+//    public Set<Integer> thisState;
+    public Set<StateGraph> thisState;
     public ArrayList<Pair<String, CompoundState>> nextStates;
     public boolean isAcceptingState;
 
-    public CompoundState(Set<Integer> state) {
+    public CompoundState(Set<StateGraph> state) {
         this.thisState = state;
         this.nextStates = new ArrayList<>();
     }

@@ -15,6 +15,9 @@ public class NfaImpl implements NFA {
     private Set<Integer> acceptingStates;
     private int initialState;
 
+    private ArrayList<StateGraph> graphs;
+//    private ArrayList<ArrayList<Set<String>>> atomicTransitions;
+
     private final String EPSILON = "";
 
     // Initializer used by factory
@@ -31,6 +34,17 @@ public class NfaImpl implements NFA {
                 this.transitions[i][j] = new TreeSet<String>();
             }
         }
+
+        this.graphs = new ArrayList<>();
+        this.graphs.add(new StateGraph(this.initialState));
+//        this.atomicTransitions = new ArrayList<>();
+//        for (int i=0; i<numStates; i++) {
+//            this.atomicTransitions.add(new ArrayList<>());
+//            for (int n=0; n<numStates; n++) {
+//                this.atomicTransitions.get(i).add(new TreeSet<>());
+//            }
+//        }
+
     }
 
     // Constructor used for kleeneStar -- FIXME
@@ -92,6 +106,99 @@ public class NfaImpl implements NFA {
         //      transitions[fromState][toState] = new TreeSet<String>();
         //  }
         transitions[fromState][toState].add(s);
+
+        // add atomic transitions to graph(s)
+        StateGraph fromGraph = null;
+        StateGraph toGraph = null;
+        int fromIdx = 0, toIdx = 0;
+        int idx = 0;
+        for (StateGraph sg: this.graphs) {
+            if (fromGraph == null) {
+                StateGraph fromResult = getGraphNode(sg, fromState);
+                if (fromResult != null) {
+                    fromGraph = fromResult;
+                    fromIdx = idx;
+                }
+            }
+            if (toGraph == null) {
+                StateGraph toResult = getGraphNode(sg, fromState);
+                if (toResult != null) {
+                    fromGraph = toResult;
+                    toIdx = idx;
+                }
+            }
+
+            if (fromGraph != null && toGraph != null) break;
+
+            idx++;
+        }
+        // make sure that subgraphs exist
+        if (fromGraph == null) {
+            graphs.add(new StateGraph(fromState));
+            fromIdx = graphs.size()-1;
+        }
+        if (toGraph == null) {
+            graphs.add(new StateGraph(toState));
+            fromIdx = graphs.size()-1;
+        }
+        // add transition
+        fromGraph.addGraph(toGraph, s);
+        // check if fromGraph and toGraph are in separate subgraphs
+        if (fromIdx != toIdx) {
+            // FIXME
+            // TESTING
+            int nextNum = fromGraph.next.size();
+
+            graphs.remove(toIdx);
+            // TESTING
+            if (fromGraph.next.size() != nextNum || fromGraph.next.get(fromGraph.next.size()-1) == null)
+                System.out.println("FAIL");
+        }
+
+
+
+//        char[] chars = s.toCharArray();
+//        // look for node/subgraph with id fromState
+//        StateGraph fromNode = getGraphNode(graphRoot, fromState);
+//        // add transitions
+//        for (int ci = 0; ci<chars.length; ci++) {
+//            StateGraph newNode;
+//            if (ci == chars.length-1) newNode = new StateGraph(toState);
+//            else newNode = new StateGraph();
+//
+//            fromNode.addGraph(newNode, ci+"");
+//
+//            fromNode = fromNode.getLast();
+//        }
+    }
+
+    private StateGraph getGraphNode(StateGraph graph, int id) {
+        if (graph.id == id) return graph;
+
+        for (StateGraph g: graph.next) {
+            StateGraph result = getGraphNode(g, id);
+            if (result != null) return result;
+        }
+
+        return null;
+    }
+
+    private Set<StateGraph> getNextGraphNodes(Set<StateGraph> set, StateGraph graph, String s) {
+        for (int i=0; i<graph.next.size(); i++) {
+            if (graph.nextSymbols.get(i) == s) {
+                if (!set.contains(graph.next.get(i))) {
+                    set.addAll(getNextGraphNodes(set, graph.next.get(i), EPSILON));
+                }
+            }
+            if (graph.nextSymbols.get(i) == EPSILON) {
+                if (!set.contains(graph.next.get(i))) {
+                    set.addAll(getNextGraphNodes(set, graph.next.get(i), s));
+                }
+            }
+            set.add(graph.next.get(i));
+        }
+
+        return set;
     }
 
     @Override
@@ -305,31 +412,29 @@ public class NfaImpl implements NFA {
     public RSA toRSA() {
         Set<CompoundState> newStates = new TreeSet<>();
         CompoundState state;
-        Set<Integer> sset = new TreeSet<>();
-        sset.add(this.initialState);
+        Set<StateGraph> sset = new TreeSet<>();
+        sset.add(new StateGraph(this.initialState));
         state = new CompoundState(sset);
         newStates.add(state);
         Iterator iter = newStates.iterator();
 
         Set<Integer> newAcceptingStates = new TreeSet<>();
 
-//        Set<Integer>[] nextStatesFor = new <Set<Integer>>[this.getNumStates()];
         Set<CompoundState> processedStates = new TreeSet<>();
-//        Set<Integer> remainingStates = new TreeSet<>();
 
         while(iter.hasNext()) {
             state = (CompoundState)iter.next();
-            for (Character c : this.characters) {
-                Set<Integer> next = new TreeSet<>();
+
+            for (Character c: this.characters) {
+                Set<StateGraph> next = new TreeSet<>();
                 boolean isAcceptingState = false;
-                for (Integer segment: state.thisState) {
-//                    System.out.println(c+" / "+this.characters.toString());
-                    next.addAll(this.getNextStates(segment, "" + c));
+                for (StateGraph subState : state.thisState) {
+                    next.addAll(getNextGraphNodes(new TreeSet<>(), graphRoot, c + ""));
                 }
                 // create next state in RSA that's reachable from current state and check if it's accepting
                 CompoundState nextCs = new CompoundState(next);
-                for (Integer j: next) {
-                    if (this.getAcceptingStates().contains(j)) {
+                for (StateGraph j: next) {
+                    if (this.getAcceptingStates().contains(j.id)) {
                         isAcceptingState = true;
                         break;
                     }
@@ -339,8 +444,34 @@ public class NfaImpl implements NFA {
                 state.nextStates.add(new Pair<>(""+c, nextCs));
                 newStates.add(nextCs);
             }
+
             processedStates.add(state);
         }
+
+//        while(iter.hasNext()) {
+//            state = (CompoundState)iter.next();
+//            for (Character c : this.characters) {
+//                Set<Integer> next = new TreeSet<>();
+//                boolean isAcceptingState = false;
+//                for (Integer segment: state.thisState) {
+////                    System.out.println(c+" / "+this.characters.toString());
+//                    next.addAll(this.getNextStates(segment, "" + c));
+//                }
+//                // create next state in RSA that's reachable from current state and check if it's accepting
+//                CompoundState nextCs = new CompoundState(next);
+//                for (Integer j: next) {
+//                    if (this.getAcceptingStates().contains(j)) {
+//                        isAcceptingState = true;
+//                        break;
+//                    }
+//                }
+//                nextCs.isAcceptingState = isAcceptingState;
+//                // now add new RSA state to newStates
+//                state.nextStates.add(new Pair<>(""+c, nextCs));
+//                newStates.add(nextCs);
+//            }
+//            processedStates.add(state);
+//        }
 
         Set<String>[][] rsaTransitions = (Set<String>[][]) new TreeSet<?>[newStates.size()][newStates.size()];
         for (int i = 0; i < rsaTransitions.length; i++) {
