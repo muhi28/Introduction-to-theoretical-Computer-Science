@@ -1,13 +1,11 @@
 package ab2.impl.Auer_Harden_Siljic;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import ab2.NFA;
 import ab2.RSA;
 import ab2.fa.exceptions.IllegalCharacterException;
+import javafx.util.Pair;
 
 // TODO: Rename to __NFAimpl pls
 public class NfaImpl implements NFA {
@@ -17,6 +15,8 @@ public class NfaImpl implements NFA {
     private Set<Integer> acceptingStates;
     private int initialState;
 
+    private final String EPSILON = "";
+
     // Initializer used by factory
     public NfaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState)
     {
@@ -25,7 +25,7 @@ public class NfaImpl implements NFA {
         this.initialState= initialState;
         this.transitions = (Set<String>[][]) new TreeSet<?>[numStates][numStates];
 
-        // Disable possible Nullpointer
+        // Avoid possible Nullpointer
         for (int i = 0; i < this.transitions.length; i++) {
             for (int j = 0; j < this.transitions[i].length; j++) {
                 this.transitions[i][j] = new TreeSet<String>();
@@ -42,6 +42,11 @@ public class NfaImpl implements NFA {
         // Missing accepting states added
         acceptingStates = this.getAcceptingStates();
     }
+
+    private void setTransitions(Set<String>[][] transitions) {
+        this.transitions = transitions;
+    }
+
     public void setSymbols(Set<Character> characters) {
         this.characters = characters;
     }
@@ -146,12 +151,39 @@ public class NfaImpl implements NFA {
         Set<Character> chars = this.characters;
         chars.addAll(a.getSymbols());
 
+        int nStates = this.getNumStates() + a.getNumStates() + 1;
+
         // @par: transitions
-        Set<String>[][] newTransitions = this.transitions;
-        for (int i=0; i<a.getTransitions().length; i++) {
-            for (int n=0; n<a.getTransitions()[0].length; n++) {
-                newTransitions[i][n].addAll(a.getTransitions()[i][n]);
+        // Create new array of transitions containing both NFAs and starting state S
+        Set<String>[][] newTransitions = (Set<String>[][]) new TreeSet<?>[nStates][nStates];
+        // Avoid possible Nullpointers
+        for (int i = 0; i < newTransitions.length; i++) {
+            for (int j = 0; j < newTransitions[i].length; j++) {
+                newTransitions[i][j] = new TreeSet<String>();
             }
+        }
+        // add S (state connecting both NFAs via epsilon)
+        newTransitions[0][1].add(EPSILON);
+        newTransitions[0][this.getNumStates() + 1].add(EPSILON); // FIXME possible off-by-one error
+
+        // add transitions of this NFA
+        for (int i=0; i<this.getNumStates(); i++) {
+            for (int n=0; n<this.getNumStates(); n++) {
+                newTransitions[i+1][n+1] = this.transitions[i][n];
+            }
+        }
+//        System.out.println("n1: "+this.getNumStates()+", a: "+a.getNumStates());
+
+        // add transitions of NFA a
+        int ii = 0, nn = 0; // second pair to offet the offset
+        for (int i=this.getNumStates()+1; i<a.getTransitions().length; i++) {
+            for (int n=this.getNumStates()+1; n<a.getTransitions()[0].length; n++) {
+//                System.out.println("i: "+i+", n: "+n);
+                newTransitions[i][n].addAll(a.getTransitions()[ii][nn]);
+                nn++;
+            }
+            nn = 0;
+            ii++;
         }
 
         // @par: acceptingStates
@@ -163,7 +195,9 @@ public class NfaImpl implements NFA {
 
         // FIXME: Return is object to change
         // Standardbuilder
-        return new NfaImpl(newTransitions.length, chars, newSet, this.initialState);
+        NfaImpl resultingNfa = new NfaImpl(newTransitions.length, chars, newSet, 0);
+        resultingNfa.setTransitions(newTransitions);
+        return resultingNfa;
         //  Old returns -- old constructors
         //return new NfaImpl(chars, newTransitions, this.initialState);
         //return new NfaImpl(this.getNumStates() + a.getNumStates(), chars, newSet, this.initialState);
@@ -269,7 +303,106 @@ public class NfaImpl implements NFA {
 
     @Override
     public RSA toRSA() {
-        return null;
+        Set<CompoundState> newStates = new TreeSet<>();
+        CompoundState state;
+        state = new CompoundState(new TreeSet<>(this.initialState));
+        newStates.add(state);
+        Iterator iter = newStates.iterator();
+
+        Set<Integer> newAcceptingStates = new TreeSet<>();
+
+//        Set<Integer>[] nextStatesFor = new <Set<Integer>>[this.getNumStates()];
+        Set<CompoundState> processedStates = new TreeSet<>();
+//        Set<Integer> remainingStates = new TreeSet<>();
+
+        while(processedStates.size() < this.getNumStates()) {
+            state = (CompoundState)iter.next();
+            for (Character c : this.characters) {
+                Set<Integer> next = new TreeSet<>();
+                boolean isAcceptingState = false;
+                for (Integer segment: state.thisState) {
+                    next.addAll(this.getNextStates(segment, "" + c));
+                }
+                // create next state in RSA that's reachable from current state and check if it's accepting
+                CompoundState nextCs = new CompoundState(next);
+                for (Integer j: next) {
+                    if (this.getAcceptingStates().contains(j)) {
+                        isAcceptingState = true;
+                        break;
+                    }
+                }
+                nextCs.isAcceptingState = isAcceptingState;
+                // now add new RSA state to newStates
+                state.nextStates.add(new Pair<>(""+c, nextCs));
+                newStates.add(nextCs);
+            }
+            processedStates.add(state);
+        }
+
+        Set<String>[][] rsaTransitions = (Set<String>[][]) new TreeSet<?>[newStates.size()][newStates.size()];
+        for (int i = 0; i < rsaTransitions.length; i++) {
+            for (int n = 0; n < rsaTransitions[0].length; n++) {
+                rsaTransitions[i][n] = new TreeSet<>();
+            }
+        }
+
+        CompoundState[] newStatesArr = (CompoundState[]) newStates.toArray();
+        for (int i=0; i<newStates.size() - 1; i++) {
+//        for (CompoundState cs: new) {
+            for (Pair<String, CompoundState> next: newStatesArr[i].nextStates) {
+                // extract transition symbol and next state
+                String sym = next.getKey();
+                CompoundState nextState = next.getValue();
+                // find index of next state
+                int nextIdx = -1;
+                for (int k = 0; k<newStatesArr.length; k++) {
+                    if (newStatesArr[k].equals(nextState)) {
+                        nextIdx = k;
+                        break;
+                    }
+                }
+                if (nextIdx == -1) System.out.println("SCHEISSE");
+
+                // set transition between the 2 RSA states
+                rsaTransitions[i][nextIdx].add(sym);
+
+                // maybe register current RSA state as accepting state
+                if(newStatesArr[i].isAcceptingState) newAcceptingStates.add(i);
+            }
+        }
+
+
+
+////        Set<String>[][] newTransitions
+//
+//        ArrayList<Integer> newStates = new ArrayList<>();
+//        newStates.add(this.initialState);
+//        int tsize = this.getNumStates() * 10;
+//        Set<String>[][] newTransitions = (Set<String>[][]) new TreeSet<?>[tsize][tsize];
+//
+//        int state = 0;
+//        Set<Integer>[] nextStatesFor = new <Set<Integer>>[this.getNumStates()];
+//        Set<Integer> processedStates = new TreeSet<>();
+//        Set<Integer> remainingStates = new TreeSet<>();
+//        remainingStates.add(this.initialState);
+//
+//        while(processedStates.size() < this.getNumStates()) {
+//            state = remainingStates.iterator().next();
+//            for (Character c : this.characters) {
+//                nextStatesFor[state] = this.getNextStates(state, "" + c);
+//                remainingStates.addAll(nextStatesFor[state]);
+//            }
+//            processedStates.add(state);
+//            remainingStates.remove(state);
+//        }
+//
+////
+////        for (int s = 0; s < this.getNumStates(); s++) {
+////            for (Character c: this.characters) {
+////
+////            }
+////        }
+
     }
 
     @Override
