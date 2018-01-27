@@ -21,6 +21,15 @@ public class StateGraph implements Comparable {
         this.nextSymbols = new ArrayList<>();
     }
 
+    public void print() {
+        System.out.println(id);
+
+        for (int i = 0; i < next.size(); i++) {
+            System.out.println(" -- "+nextSymbols.get(i)+" --> ");
+            next.get(i).print();
+        }
+    }
+
     public StateGraph getLast() {
         return this.next.get(this.next.size()-1);
     }

@@ -16,7 +16,6 @@ public class NfaImpl implements NFA {
     private int initialState;
 
     private ArrayList<StateGraph> graphs;
-//    private ArrayList<ArrayList<Set<String>>> atomicTransitions;
 
     private final String EPSILON = "";
 
@@ -106,6 +105,8 @@ public class NfaImpl implements NFA {
         //      transitions[fromState][toState] = new TreeSet<String>();
         //  }
         transitions[fromState][toState].add(s);
+        // WHAT THE ACTUAL FUCK
+//        System.out.println("SET TRANSITION: s: "+s+", transitions: "+transitions[fromState][toState].toString());
 
         // add atomic transitions to graph(s)
         StateGraph fromGraph = null;
@@ -121,7 +122,7 @@ public class NfaImpl implements NFA {
                 }
             }
             if (toGraph == null) {
-                StateGraph toResult = getGraphNode(sg, fromState);
+                StateGraph toResult = getGraphNode(sg, toState);
                 if (toResult != null) {
                     fromGraph = toResult;
                     toIdx = idx;
@@ -135,24 +136,43 @@ public class NfaImpl implements NFA {
         // make sure that subgraphs exist
         if (fromGraph == null) {
             graphs.add(new StateGraph(fromState));
+            fromGraph = graphs.get(graphs.size()-1);
             fromIdx = graphs.size()-1;
         }
         if (toGraph == null) {
             graphs.add(new StateGraph(toState));
-            fromIdx = graphs.size()-1;
+            toGraph = graphs.get(graphs.size()-1);
+            toIdx = graphs.size()-1;
         }
+
+        // split s up into chars for intermediate states and add transitions
+        StateGraph fromNode = fromGraph;
+        char[] chars = s.toCharArray();
+        for (int ci = 0; ci<chars.length; ci++) {
+            StateGraph intNode;
+            if (ci == chars.length-1) intNode = toGraph;
+            else intNode = new StateGraph();
+
+            fromNode.addGraph(intNode, chars[ci]+"");
+//            System.out.println("ADD CHAR: "+chars[ci]+", "+ci);
+
+            fromNode = fromNode.getLast();
+        }
+
         // add transition
-        fromGraph.addGraph(toGraph, s);
+//        fromGraph.addGraph(toGraph, s);
         // check if fromGraph and toGraph are in separate subgraphs
         if (fromIdx != toIdx) {
             // FIXME
-            // TESTING
-            int nextNum = fromGraph.next.size();
+//            // TESTING
+//            int nextNum = fromGraph.next.size();
 
             graphs.remove(toIdx);
-            // TESTING
-            if (fromGraph.next.size() != nextNum || fromGraph.next.get(fromGraph.next.size()-1) == null)
-                System.out.println("FAIL");
+
+//            // TESTING
+//            if (fromGraph.next.size() != nextNum || fromGraph.next.get(fromGraph.next.size()-1) == null)
+//                System.out.println("FAIL");
+            if (toGraph == null) System.out.println("FAIL???");
         }
 
 
@@ -219,31 +239,60 @@ public class NfaImpl implements NFA {
         // Exceptionhandling :: IllegalChar
 //        if(state < getNumStates() || state > getNumStates()) { throw new IllegalStateException("Error in NFAImpl::getNextStates");}
         if (state < 0 || state >= this.getNumStates()) throw new IllegalStateException("geta nita");
-        if (!this.characters.contains(s.toCharArray()[0])) throw new IllegalCharacterException();
+        if (s.length() > 0 && !this.characters.contains(s.toCharArray()[0])) throw new IllegalCharacterException();
 
-        return getNextStatesStep(new TreeSet<Integer>(), state, s);
+        System.out.println("> "+s);
+        this.graphs.get(0).print();
+
+        for (int i = 0; i < this.transitions.length; i++) {
+            for (int n = 0; n < this.transitions[0].length; n++) {
+                System.out.print(transitions[i][n] + " ");
+            }
+            System.out.println();
+        }
+//        return getNextStatesStep(new TreeSet<Integer>(), state, s);
+        Set<Integer> set = new TreeSet<>();
+        Integer result = getNextStatesStep(state, s);
+        System.out.println(result);
+        if (result != null) set.add(result);
+        return set;
     }
 
     /** Liefert Set aus Zuständen zurück die mit S erreichbar sind
-     * @param set      = Recursive filled set containing all reachable states
      * @param state    = State to check
      * @param s        = Full String to check || Epsilon to check
      * @return set
      */
-    private Set<Integer> getNextStatesStep(Set<Integer> set, int state, String s) {
-        for (int i = 0; i < transitions[0].length; i++) {                       // For each fromState
-            if (!set.contains(i)) {
-                if (!s.isEmpty() && transitions[state][i].contains(s)) {        // There is a transition so that fromstate->tostate using S
-                        set.add(i);                                             //  Add to set
-                        set.addAll(getNextStatesStep(set, i, ""));           //   Repeat using epsilon-paths
-                }
-                if (transitions[state][i].contains("")) {                       // fromstate->tostate using epsilon
-                        set.add(i);
-                        set.addAll(getNextStatesStep(set, i, s));
+//    private Set<Integer> getNextStatesStep(Set<Integer> set, int state, String s) {
+    private Integer getNextStatesStep(int state, String s) {
+//        System.out.println(">>> "+transitions.length+", "+transitions[0].length);
+        for (int i = 0; i < this.transitions[0].length; i++) {
+//            System.out.println("transitions: "+this.transitions[state][i].toString());
+            for (String transition: this.transitions[state][i]) {
+                if (s.startsWith(transition)) {
+                    System.out.println("transition: "+transition+", s: "+s+", substr: "+s.substring(transition.length())+", STATE: "+state);
+                    Integer result = getNextStatesStep(i, s.substring(transition.length()));
+                    if (result != null) return result;
                 }
             }
         }
-        return set;
+
+        if (s.length() == 0 && this.acceptingStates.contains(state)) return state;
+        return null;
+
+//        for (int i = 0; i < transitions[0].length; i++) {                       // For each fromState
+//            if (!set.contains(i)) {
+//                if (!s.isEmpty() && transitions[state][i].contains(s)) {        // There is a transition so that fromstate->tostate using S
+//                        set.add(i);                                             //  Add to set
+//                        set.addAll(getNextStatesStep(set, i, ""));           //   Repeat using epsilon-paths
+//                }
+//                if (transitions[state][i].contains("")) {                       // fromstate->tostate using epsilon
+//                        set.add(i);
+//                        set.addAll(getNextStatesStep(set, i, s));
+//                }
+//            }
+//        }
+//        return set;
     }
 
     @Override
@@ -262,6 +311,7 @@ public class NfaImpl implements NFA {
 
         // @par: transitions
         // Create new array of transitions containing both NFAs and starting state S
+//        System.out.println("################################## union ##### "+nStates);
         Set<String>[][] newTransitions = (Set<String>[][]) new TreeSet<?>[nStates][nStates];
         // Avoid possible Nullpointers
         for (int i = 0; i < newTransitions.length; i++) {
@@ -335,6 +385,8 @@ public class NfaImpl implements NFA {
         chars.addAll(a.getSymbols());
 
         // @par transitions
+
+//        System.out.println("################################## concat ##### "+newSize);
         Set<String>[][] newTransitions = (Set<String>[][]) new TreeSet<?>[newSize][newSize];
         for (int f = 0; f < transitions.length; f++) {
             for (int t = 0; t < transitions[0].length; t++) {
@@ -422,6 +474,9 @@ public class NfaImpl implements NFA {
 
         Set<CompoundState> processedStates = new TreeSet<>();
 
+        // assume there's only one complete graph left
+        StateGraph graphRoot = this.graphs.get(0);
+
         while(iter.hasNext()) {
             state = (CompoundState)iter.next();
 
@@ -440,12 +495,27 @@ public class NfaImpl implements NFA {
                     }
                 }
                 nextCs.isAcceptingState = isAcceptingState;
-                // now add new RSA state to newStates
-                state.nextStates.add(new Pair<>(""+c, nextCs));
-                newStates.add(nextCs);
+
+                // FIXME check for duplicates and maybe return already existing next CS?
+//                boolean askdjk = false;
+//                for (CompoundState cs: newStates) {
+//                    for (StateGraph g: cs.thisState) {
+//                        if (g.equals(nextCs)) {
+//                            System.out.println("slkdjfkdsjfldskjlkjdskfjdslkj");
+//                            state.nextStates.add(new Pair<>(""+c, cs));
+//                            askdjk = true;
+//                        }
+//                    }
+//                }
+//if (!askdjk) {
+    // now add new RSA state to newStates
+    state.nextStates.add(new Pair<>("" + c, nextCs));
+    newStates.add(nextCs);
+//}
             }
 
             processedStates.add(state);
+
         }
 
 //        while(iter.hasNext()) {
@@ -473,6 +543,11 @@ public class NfaImpl implements NFA {
 //            processedStates.add(state);
 //        }
 
+        Set<StateGraph> omegaSet = new TreeSet<>();
+        omegaSet.add(new StateGraph(666));
+        newStates.add(new CompoundState(omegaSet));
+
+//        System.out.println("################################## toRSA ##### "+newStates.size());
         Set<String>[][] rsaTransitions = (Set<String>[][]) new TreeSet<?>[newStates.size()][newStates.size()];
         for (int i = 0; i < rsaTransitions.length; i++) {
             for (int n = 0; n < rsaTransitions[0].length; n++) {
@@ -511,6 +586,25 @@ public class NfaImpl implements NFA {
             }
         }
 
+        // add non-accepting state
+        for (int i = 0; i < rsaTransitions.length-1; i++) {
+            for(char c: this.characters) {
+                boolean transitionExists = false;
+                for (int n = 0; n < rsaTransitions[0].length-1; n++) {
+                    if (rsaTransitions[i][n].contains(c+"")) {
+                        transitionExists = true;
+                        break;
+                    }
+                }
+                if (!transitionExists) {
+                    rsaTransitions[i][rsaTransitions.length-1].add(c+"");
+                }
+            }
+        }
+        for (char c: this.characters) {
+            rsaTransitions[rsaTransitions.length - 1][rsaTransitions.length - 1].add(c+"");
+        }
+
         __RSAimpl rsa = new __RSAimpl(newStates.size(), this.characters, newAcceptingStates, 0);
         rsa.setTransitions(rsaTransitions);
 
@@ -530,30 +624,41 @@ public class NfaImpl implements NFA {
     }
 
     private boolean acceptsRecursive(int s, String w) {
-        String c = "";
-        String ws = "";
-        if (!w.equals("")) {
-            c = String.valueOf(w.charAt(0));
-            ws = w.substring(1);
-        }
+        Set<Integer> endState = this.getNextStates(s, w);
 
-        Set<Integer> states = this.getNextStates(s, c);
+        return endState.size() > 0;
 
-        if (w.isEmpty()) {
-            for (Integer state: states) {
-                if (acceptingStates.contains(state)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        for (Integer state: states) {
-            if (acceptsRecursive(state, ws)) {
-                System.out.println("Echo::Case2.1");
-                return true;
-            }
-        }
-        return false;
+//        for (int as: this.acceptingStates) {
+//            if (reachableStates.contains(as)) {
+//                return true;
+//            }
+//        }
+//        return false;
+
+//        String c = "";
+//        String ws = "";
+//        if (!w.equals(EPSILON)) {
+//            c = w.charAt(0)+"";//String.valueOf(w.charAt(0));
+//            ws = w.substring(1);
+//        }
+//
+//        Set<Integer> states = this.getNextStates(s, c);
+//
+//        if (w.isEmpty()) {
+//            for (Integer state: states) {
+//                if (acceptingStates.contains(state)) {
+//                    return true;
+//                }
+//            }
+//            return false;
+//        }
+//        for (Integer state: states) {
+//            if (acceptsRecursive(state, ws)) {
+//                System.out.println("Echo::Case2.1");
+//                return true;
+//            }
+//        }
+//        return false;
     }
 
     @Override
