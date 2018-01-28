@@ -15,6 +15,9 @@ public class __RSAimpl extends __DFAimpl implements RSA {
 
     @Override
     public RSA minimize() {
+
+        System.out.println("Minimize_begin(): "+this.getNumStates());
+
         // INIT
         //
         // create tuple sets
@@ -96,6 +99,9 @@ public class __RSAimpl extends __DFAimpl implements RSA {
                 }
             }
         }
+
+
+        System.out.println("Minimize_end(): "+rsa.getNumStates());
 
         return rsa;
     }

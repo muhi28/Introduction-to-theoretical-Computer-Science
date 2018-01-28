@@ -136,20 +136,21 @@ public class NfaImpl implements NFA {
         // make sure that subgraphs exist
         if (fromGraph == null) {
             graphs.add(new StateGraph(fromState));
-            fromGraph = graphs.get(graphs.size()-1);
             fromIdx = graphs.size()-1;
+            fromGraph = graphs.get(fromIdx);
         }
         if (toGraph == null) {
             graphs.add(new StateGraph(toState));
-            toGraph = graphs.get(graphs.size()-1);
             toIdx = graphs.size()-1;
+            toGraph = graphs.get(toIdx);
         }
-
+//        System.out.println("*** "+s);
         // split s up into chars for intermediate states and add transitions
         StateGraph fromNode = fromGraph;
         char[] chars = s.toCharArray();
         for (int ci = 0; ci<chars.length; ci++) {
             StateGraph intNode;
+//            System.out.println("+ "+chars[ci]);
             if (ci == chars.length-1) intNode = toGraph;
             else intNode = new StateGraph();
 
@@ -190,6 +191,8 @@ public class NfaImpl implements NFA {
 //
 //            fromNode = fromNode.getLast();
 //        }
+
+//        graphs.get(0).print();
     }
 
     private StateGraph getGraphNode(StateGraph graph, int id) {
@@ -217,6 +220,8 @@ public class NfaImpl implements NFA {
             }
             set.add(graph.next.get(i));
         }
+
+//        System.out.println("#################### "+graph.id+", "+set.iterator().next().id);
 
         return set;
     }
@@ -462,87 +467,129 @@ public class NfaImpl implements NFA {
 
     @Override
     public RSA toRSA() {
-        Set<CompoundState> newStates = new TreeSet<>();
-        CompoundState state;
-        Set<StateGraph> sset = new TreeSet<>();
-        sset.add(new StateGraph(this.initialState));
-        state = new CompoundState(sset);
-        newStates.add(state);
-        Iterator iter = newStates.iterator();
 
+        graphs.get(0).print();
+
+        CompoundState rsaGraph = graphs.get(0).asCompoundStates();
+        ArrayList<CompoundState> newStates = new ArrayList<>();
+        ArrayList<CompoundState> remaining = new ArrayList<>();
         Set<Integer> newAcceptingStates = new TreeSet<>();
 
-        Set<CompoundState> processedStates = new TreeSet<>();
+        // add root first, then add next CompoundStates in while loop
+        newStates.add(rsaGraph);
 
-        // assume there's only one complete graph left
-        StateGraph graphRoot = this.graphs.get(0);
+        CompoundState currentState = rsaGraph;
+        while(true) {
+            ArrayList<Pair<String, CompoundState>> nextArr = currentState.nextStates;
 
-        while(iter.hasNext()) {
-            state = (CompoundState)iter.next();
-
-            for (Character c: this.characters) {
-                Set<StateGraph> next = new TreeSet<>();
-                boolean isAcceptingState = false;
-                for (StateGraph subState : state.thisState) {
-                    next.addAll(getNextGraphNodes(new TreeSet<>(), graphRoot, c + ""));
-                }
-                // create next state in RSA that's reachable from current state and check if it's accepting
-                CompoundState nextCs = new CompoundState(next);
-                for (StateGraph j: next) {
-                    if (this.getAcceptingStates().contains(j.id)) {
-                        isAcceptingState = true;
+            for (Pair<String,CompoundState> pair: nextArr) {
+                boolean isDup = false;
+                for (CompoundState cs : newStates) {
+                    if (cs.equals(pair.getValue())) {
+                        isDup = true;
                         break;
                     }
                 }
-                nextCs.isAcceptingState = isAcceptingState;
+                if (!isDup) {
+                    CompoundState addedCS = pair.getValue();
+                    // accepting state?
+                    for (StateGraph sg: pair.getValue().thisState) {
+                        if (this.acceptingStates.contains(sg.id)) {
+//                            System.out.println("add acc: "+newStates.size());
+                            addedCS.isAcceptingState = true;
+                        }
+                    }
 
-                // FIXME check for duplicates and maybe return already existing next CS?
-//                boolean askdjk = false;
-//                for (CompoundState cs: newStates) {
-//                    for (StateGraph g: cs.thisState) {
-//                        if (g.equals(nextCs)) {
-//                            System.out.println("slkdjfkdsjfldskjlkjdskfjdslkj");
-//                            state.nextStates.add(new Pair<>(""+c, cs));
-//                            askdjk = true;
-//                        }
-//                    }
-//                }
-//if (!askdjk) {
-    // now add new RSA state to newStates
-    state.nextStates.add(new Pair<>("" + c, nextCs));
-    newStates.add(nextCs);
-//}
+                    newStates.add(addedCS);
+                    remaining.add(addedCS);
+
+//                    System.out.println(addedCS.thisState.iterator().next().id);
+                }
             }
 
-            processedStates.add(state);
-
+            if (remaining.size() == 0) break;
+            currentState = remaining.remove(0);
         }
 
-//        while(iter.hasNext()) {
-//            state = (CompoundState)iter.next();
-//            for (Character c : this.characters) {
-//                Set<Integer> next = new TreeSet<>();
+////        Set<CompoundState> newStates = new TreeSet<>();
+//        ArrayList<CompoundState> newStates = new ArrayList<>();
+//        CompoundState state;
+//        Set<StateGraph> sset = new TreeSet<>();
+//        sset.add(new StateGraph(this.initialState));
+//        state = new CompoundState(sset);
+//        newStates.add(state);
+////        Iterator iter = newStates.iterator();
+//        int idx = 0;
+//
+//        Set<Integer> newAcceptingStates = new TreeSet<>();
+//
+//        Set<CompoundState> processedStates = new TreeSet<>();
+//
+//        // assume there's only one complete graph left
+//        StateGraph graphRoot = this.graphs.get(0);
+//
+////        while(iter.hasNext()) {
+//        Set<Integer> procs = new TreeSet<>();
+//
+//        outer: while(true) {
+////            state = (CompoundState)iter.next();
+//            state = newStates.get(idx++);
+//
+////            System.out.println(idx);
+////            System.out.println("############# "+state.thisState.iterator().next().id);
+//
+//            for (Character c: this.characters) {
+//                Set<StateGraph> next = new TreeSet<>();
 //                boolean isAcceptingState = false;
-//                for (Integer segment: state.thisState) {
-////                    System.out.println(c+" / "+this.characters.toString());
-//                    next.addAll(this.getNextStates(segment, "" + c));
+//                for (StateGraph subState : state.thisState) {
+//                    next.addAll(getNextGraphNodes(new TreeSet<>(), graphRoot, c + ""));
 //                }
+//
+//
+////                if (procs.size() > this.graphs.get(0).size()) {
+////                    break;
+////                }
+//
+////                System.out.println("##### "+c+", "+next.iterator().next().id);
 //                // create next state in RSA that's reachable from current state and check if it's accepting
 //                CompoundState nextCs = new CompoundState(next);
-//                for (Integer j: next) {
-//                    if (this.getAcceptingStates().contains(j)) {
+//                for (StateGraph j: next) {
+//                    if (this.getAcceptingStates().contains(j.id)) {
 //                        isAcceptingState = true;
 //                        break;
 //                    }
 //                }
 //                nextCs.isAcceptingState = isAcceptingState;
-//                // now add new RSA state to newStates
-//                state.nextStates.add(new Pair<>(""+c, nextCs));
+//
+//                // FIXME check for duplicates and maybe return already existing next CS?
+////                boolean askdjk = false;
+////                for (CompoundState cs: newStates) {
+////                    for (StateGraph g: cs.thisState) {
+////                        if (g.equals(nextCs)) {
+////                            System.out.println("slkdjfkdsjfldskjlkjdskfjdslkj");
+////                            state.nextStates.add(new Pair<>(""+c, cs));
+////                            askdjk = true;
+////                        }
+////                    }
+////                }
+////if (!askdjk) {
+//    // now add new RSA state to newStates
+//                state.nextStates.add(new Pair<>("" + c, nextCs));
 //                newStates.add(nextCs);
+//
+//                for (StateGraph sg: next) {
+//                    int s = procs.size();
+//                    procs.add(sg.id);
+//                    if (procs.size() == s) {
+//                        break outer;
+//                    }
+//                }
 //            }
+//
 //            processedStates.add(state);
+//
 //        }
-
+        System.out.println("> "+newStates.size());
         Set<StateGraph> omegaSet = new TreeSet<>();
         omegaSet.add(new StateGraph(666));
         newStates.add(new CompoundState(omegaSet));
@@ -562,7 +609,7 @@ public class NfaImpl implements NFA {
             newStatesArr[z++] = cs;
         }
 
-        for (int i=0; i<newStates.size() - 1; i++) {
+        for (int i=0; i<newStatesArr.length; i++) {
 //        for (CompoundState cs: new) {
             for (Pair<String, CompoundState> next: newStatesArr[i].nextStates) {
                 // extract transition symbol and next state
@@ -581,8 +628,12 @@ public class NfaImpl implements NFA {
                 // set transition between the 2 RSA states
                 rsaTransitions[i][nextIdx].add(sym);
 
-                // maybe register current RSA state as accepting state
-                if(newStatesArr[i].isAcceptingState) newAcceptingStates.add(i);
+            }
+
+            // maybe register current RSA state as accepting state
+            if(newStatesArr[i].isAcceptingState) {
+                newAcceptingStates.add(i);
+//                    System.out.println("newAcc: "+i);
             }
         }
 
@@ -601,9 +652,9 @@ public class NfaImpl implements NFA {
                 }
             }
         }
-        for (char c: this.characters) {
-            rsaTransitions[rsaTransitions.length - 1][rsaTransitions.length - 1].add(c+"");
-        }
+//        for (char c: this.characters) {
+//            rsaTransitions[rsaTransitions.length - 1][rsaTransitions.length - 1].add(c+"");
+//        }
 
         __RSAimpl rsa = new __RSAimpl(newStates.size(), this.characters, newAcceptingStates, 0);
         rsa.setTransitions(rsaTransitions);
@@ -619,7 +670,8 @@ public class NfaImpl implements NFA {
         for (char c: chars) {
             if (!characters.contains(c)) throw new IllegalCharacterException();
         }
-
+//        System.out.println("accepts: "+w+", from: "+initialState);
+//        System.out.println(this.acceptingStates.contains());
         return acceptsRecursive(initialState, w);
     }
 
@@ -701,32 +753,34 @@ public class NfaImpl implements NFA {
         return result;
     }
 
-    /**Checks whether T contains some infinite loop
-     * @param checked
-     * @param s
-     * @param hasCycle
-     * @return
-     */
-    private boolean cyclingPathExists(Set<Integer> checked, int s, boolean hasCycle) {
-        if (this.acceptingStates.contains(s)) {
-            return hasCycle;
-        }
-
-        boolean result = false;
-
-        for (int t=0; t<this.transitions[0].length; t++) {
-            if (checked.contains(t)) {
-                hasCycle = true;
-                continue;
-            }
-            checked.add(t);
-
-            result = hasCycle || cyclingPathExists(checked, t, hasCycle);
-            if (result) return true;
-        }
-
-        return result;
-    }
+//    /**Checks whether T contains some infinite loop
+//     * @param checked
+//     * @param s
+//     * @param hasCycle
+//     * @return
+//     */
+//    private boolean cyclingPathExists(Set<Integer> checked, int s, boolean hasCycle) {
+//
+//
+////        if (this.acceptingStates.contains(s)) {
+////            return hasCycle;
+////        }
+////
+////        boolean result = false;
+////
+////        for (int t=0; t<this.transitions[0].length; t++) {
+////            if (checked.contains(t)) {
+////                hasCycle = true;
+////                continue;
+////            }
+////            checked.add(t);
+////
+////            result = hasCycle || cyclingPathExists(checked, t, hasCycle);
+////            if (result) return true;
+////        }
+////
+////        return result;
+//    }
 
     @Override
     public Boolean acceptsEpsilon() {
@@ -735,7 +789,16 @@ public class NfaImpl implements NFA {
 
     @Override
     public Boolean isInfinite() {
-        return cyclingPathExists(new TreeSet<Integer>(), initialState, false);
+        for (int from = 0; from < transitions.length; from++) {
+            for (int to = 0; to < transitions[0].length; to++) {
+                if (transitions[from][to].size() > 0) {
+                    if (from >= to) return true;
+                }
+            }
+        }
+        return false;
+
+//        return cyclingPathExists(new TreeSet<Integer>(), initialState, false);
     }
 
     @Override

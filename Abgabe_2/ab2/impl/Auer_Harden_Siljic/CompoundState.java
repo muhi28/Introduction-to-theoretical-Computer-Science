@@ -12,10 +12,35 @@ public class CompoundState implements Comparable {
     public Set<StateGraph> thisState;
     public ArrayList<Pair<String, CompoundState>> nextStates;
     public boolean isAcceptingState;
+    public CompoundState parent;
 
     public CompoundState(Set<StateGraph> state) {
         this.thisState = state;
         this.nextStates = new ArrayList<>();
+    }
+
+    public CompoundState getDuplicate(CompoundState possibleDup, String sym, boolean firstStep) {
+        // check if duplicate
+        if (this.equals(possibleDup)) {
+            if (firstStep) {
+                this.nextStates.add(new Pair<>(sym, this));
+            }
+            return this;
+        } else {
+            if (this.parent != null) { // if this is not the graph's root
+                CompoundState result = this.parent.getDuplicate(possibleDup, sym, false);
+
+                if (result == null) return null;
+                else {
+                    if (firstStep) {
+                        this.nextStates.add(new Pair<>(sym, result));
+                    }
+                    return result;
+                }
+            } else { // root and not found any duplicate -> return null
+                return null;
+            }
+        }
     }
 
     @Override
