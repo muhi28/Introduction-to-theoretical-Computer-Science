@@ -69,13 +69,12 @@ public class StateGraph implements Comparable {
             }
             epsilonIdx++;
         }
-        Set<CompoundState> epsilonNexts = new TreeSet<>();
+        Set<Integer> epsilonNexts = new TreeSet<>();
         if (hasEpsilonTransitions) {
             for (int k = 0; k < nextCompoundCandidates.get(epsilonIdx).size(); k++) {
-                epsilonNexts.add(nextCompoundCandidates.get(epsilonIdx).get(k).asCompoundStates());
+                epsilonNexts.add(nextCompoundCandidates.get(epsilonIdx).get(k).asCompoundStates().id);
             }
         }
-
 
 
         // create CompoundState from this StateGraph instance and all following states reachable by epsilon transitions
@@ -86,9 +85,11 @@ public class StateGraph implements Comparable {
         CompoundState thisCS = new CompoundState(thisStates);
         thisCS.parent = parent;
 
+//        System.out.println((thisCS.parent!=null)+", "+thisCS.thisState.size());
+
         // check for duplicates if this is not root
         if (parent != null) {
-            CompoundState original = parent.getDuplicate(thisCS, usedSym, true);
+            Integer original = parent.getDuplicate(thisCS, usedSym, true);
             if (original != null) {
                 return null;
             }
@@ -99,25 +100,49 @@ public class StateGraph implements Comparable {
 
         // now get the following states for all states in this CompoundState
         for (int i=0; i<nextUniqueSymbols.size(); i++) {
+            // FIXME ???
+//            if (i == epsilonIdx) continue;
+
+//            System.out.println("All Attributes::");
+//            System.out.println(nextUniqueSymbols.size());
             CompoundState newCS = new CompoundState(new TreeSet<>());
 
             for (int k = 0; k < nextCompoundCandidates.get(i).size(); k++) {
                 CompoundState tempCS = nextCompoundCandidates.get(i).get(k).compileCompoundStates(thisCS, nextUniqueSymbols.get(i));
+                System.out.println(nextCompoundCandidates.get(i).get(k).id);
+
                 if (tempCS != null) {
                     newCS.thisState.add(nextCompoundCandidates.get(i).get(k));
-                    newCS.nextStates.addAll(tempCS.nextStates);
+//                    System.out.println("next states: "+tempCS.nextStates);
+
+                    // merge nextStates ignoring duplicates
+//                    Set<String> processedSymbols = new TreeSet<>();
+                    for (Pair<String, Integer> pair: tempCS.nextStates) {
+//                        if (!processedSymbols.contains(pair.getKey()) &&
+//                                !pair.getKey().equals(EPSILON)) {
+//                            processedSymbols.add(pair.getKey());
+                        if (!pair.getKey().equals(EPSILON)) {
+//                            System.out.println("merge: "+pair.getKey());
+                            // add
+                            newCS.nextStates.add(pair);
+                        }
+                    }
+////                    newCS.nextStates.addAll(tempCS.nextStates);
+
+                    // FIXME ???
+                    newCS.id = tempCS.id;
                 }
             }
 
-            thisCS.nextStates.add(new Pair<>(nextUniqueSymbols.get(i), newCS));
+            thisCS.nextStates.add(new Pair<>(nextUniqueSymbols.get(i), newCS.id));
         }
 
-        System.out.print("new CompoundState: ");
-        for(StateGraph sg: thisCS.thisState) {
-            System.out.print(sg.id);
-        }
-        if (thisCS.parent != null ) System.out.println(" | "+thisCS.parent.thisState.iterator().next().id);
-        else System.out.println();
+//        System.out.print("new CompoundState: ");
+//        for(StateGraph sg: thisCS.thisState) {
+//            System.out.print(sg.id);
+//        }
+//        if (thisCS.parent != null ) System.out.println(" | "+thisCS.parent.thisState.iterator().next().id);
+//        else System.out.println();
 
         return thisCS;
 

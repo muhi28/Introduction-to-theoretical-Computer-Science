@@ -16,7 +16,7 @@ public class __RSAimpl extends __DFAimpl implements RSA {
     @Override
     public RSA minimize() {
 
-        System.out.println("Minimize_begin(): "+this.getNumStates());
+//        System.out.println("Minimize_begin(): "+this.getNumStates());
 
         // INIT
         //
@@ -101,7 +101,7 @@ public class __RSAimpl extends __DFAimpl implements RSA {
         }
 
 
-        System.out.println("Minimize_end(): "+rsa.getNumStates());
+//        System.out.println("Minimize_end(): "+rsa.getNumStates());
 
         return rsa;
     }

@@ -66,8 +66,8 @@ public class __DFAimpl extends NfaImpl implements DFA {
 
     @Override
     public void setTransition(int fromState, String s, int toState) throws IllegalStateException, IllegalCharacterException {
-        if (s.isEmpty() || s.length() > 1 ||
-                !getSymbols().contains(s.charAt(0))) throw new IllegalCharacterException();
+        if (s.length() > 1 ||
+                (!s.equals(EPSILON) && !getSymbols().contains(s.charAt(0)))) throw new IllegalCharacterException();
         if (fromState < 0 || fromState > getTransitions().length ||
                 toState < 0 || toState > getTransitions().length) throw new IllegalStateException();
 

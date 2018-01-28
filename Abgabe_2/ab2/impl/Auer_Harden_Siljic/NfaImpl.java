@@ -17,7 +17,7 @@ public class NfaImpl implements NFA {
 
     private ArrayList<StateGraph> graphs;
 
-    private final String EPSILON = "";
+    public final String EPSILON = "";
 
     // Initializer used by factory
     public NfaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState)
@@ -43,7 +43,6 @@ public class NfaImpl implements NFA {
 //                this.atomicTransitions.get(i).add(new TreeSet<>());
 //            }
 //        }
-
     }
 
     // Constructor used for kleeneStar -- FIXME
@@ -56,9 +55,9 @@ public class NfaImpl implements NFA {
         acceptingStates = this.getAcceptingStates();
     }
 
-    protected void setTransitions(Set<String>[][] transitions) {
-        this.transitions = transitions;
-    }
+//    protected void setTransitions(Set<String>[][] transitions) {
+//        this.transitions = transitions;
+//    }
 
     public void setSymbols(Set<Character> characters) {
         this.characters = characters;
@@ -105,6 +104,9 @@ public class NfaImpl implements NFA {
         //      transitions[fromState][toState] = new TreeSet<String>();
         //  }
         transitions[fromState][toState].add(s);
+
+//        System.out.println(transitions[fromState][toState]);
+
         // WHAT THE ACTUAL FUCK
 //        System.out.println("SET TRANSITION: s: "+s+", transitions: "+transitions[fromState][toState].toString());
 
@@ -148,13 +150,23 @@ public class NfaImpl implements NFA {
         // split s up into chars for intermediate states and add transitions
         StateGraph fromNode = fromGraph;
         char[] chars = s.toCharArray();
+        // edge case: EPSILON results in empty char array
+        if (s.equals(EPSILON)) {
+            chars = new char[]{'E'};
+        }
+
         for (int ci = 0; ci<chars.length; ci++) {
             StateGraph intNode;
 //            System.out.println("+ "+chars[ci]);
             if (ci == chars.length-1) intNode = toGraph;
             else intNode = new StateGraph();
 
-            fromNode.addGraph(intNode, chars[ci]+"");
+            // IMPORTANT - Consider corner case with EPSILON:
+            String symStr = chars[ci]+"";
+            if (s.equals(EPSILON)) symStr = EPSILON;
+            // add subgraph/node
+            fromNode.addGraph(intNode, symStr);
+
 //            System.out.println("ADD CHAR: "+chars[ci]+", "+ci);
 
             fromNode = fromNode.getLast();
@@ -247,14 +259,14 @@ public class NfaImpl implements NFA {
         if (s.length() > 0 && !this.characters.contains(s.toCharArray()[0])) throw new IllegalCharacterException();
 
         System.out.println("> "+s);
-        this.graphs.get(0).print();
+//        this.graphs.get(0).print();
 
-        for (int i = 0; i < this.transitions.length; i++) {
-            for (int n = 0; n < this.transitions[0].length; n++) {
-                System.out.print(transitions[i][n] + " ");
-            }
-            System.out.println();
-        }
+//        for (int i = 0; i < this.transitions.length; i++) {
+//            for (int n = 0; n < this.transitions[0].length; n++) {
+//                System.out.print(transitions[i][n] + " ");
+//            }
+//            System.out.println();
+//        }
 //        return getNextStatesStep(new TreeSet<Integer>(), state, s);
         Set<Integer> set = new TreeSet<>();
         Integer result = getNextStatesStep(state, s);
@@ -275,7 +287,7 @@ public class NfaImpl implements NFA {
 //            System.out.println("transitions: "+this.transitions[state][i].toString());
             for (String transition: this.transitions[state][i]) {
                 if (s.startsWith(transition)) {
-                    System.out.println("transition: "+transition+", s: "+s+", substr: "+s.substring(transition.length())+", STATE: "+state);
+//                    System.out.println("transition: "+transition+", s: "+s+", substr: "+s.substring(transition.length())+", STATE: "+state);
                     Integer result = getNextStatesStep(i, s.substring(transition.length()));
                     if (result != null) return result;
                 }
@@ -307,59 +319,106 @@ public class NfaImpl implements NFA {
 
     @Override
     public NFA union(NFA a) {
-        //// Setup new NFA.
-        // @par:: Characters
-        Set<Character> chars = this.characters;
-        chars.addAll(a.getSymbols());
+        // Setup new NFA.
+        Set<Character> allChars = this.characters;
+        allChars.addAll(a.getSymbols());
 
-        int nStates = this.getNumStates() + a.getNumStates() + 1;
+        int offset = this.getNumStates() + 1;
 
-        // @par: transitions
-        // Create new array of transitions containing both NFAs and starting state S
-//        System.out.println("################################## union ##### "+nStates);
-        Set<String>[][] newTransitions = (Set<String>[][]) new TreeSet<?>[nStates][nStates];
-        // Avoid possible Nullpointers
-        for (int i = 0; i < newTransitions.length; i++) {
-            for (int j = 0; j < newTransitions[i].length; j++) {
-                newTransitions[i][j] = new TreeSet<String>();
+        int allStates = a.getNumStates() + offset;
+
+        Set<String>[][] allTransitions = (Set<String>[][]) new TreeSet<?>[allStates][allStates];
+        // fill with empty sets to avoid possible Nullpointers
+        for (int i = 0; i < allTransitions.length; i++) {
+            for (int j = 0; j < allTransitions[i].length; j++) {
+                allTransitions[i][j] = new TreeSet<String>();
             }
         }
         // add S (state connecting both NFAs via epsilon)
-        newTransitions[0][1].add(EPSILON);
-        newTransitions[0][this.getNumStates() + 1].add(EPSILON); // FIXME possible off-by-one error
+        allTransitions[0][1].add(EPSILON);
+        allTransitions[0][offset].add(EPSILON); // FIXME possible off-by-one error
+//        allTransitions[0][this.getNumStates()].add(EPSILON); // FIXME possible off-by-one error
 
         // add transitions of this NFA
         for (int i=0; i<this.getNumStates(); i++) {
             for (int n=0; n<this.getNumStates(); n++) {
-                newTransitions[i+1][n+1] = this.transitions[i][n];
+                allTransitions[i+1][n+1] = this.transitions[i][n];
             }
         }
-//        System.out.println("n1: "+this.getNumStates()+", a: "+a.getNumStates());
-
         // add transitions of NFA a
         int ii = 0, nn = 0; // second pair to offet the offset
-        for (int i=this.getNumStates()+1; i<a.getTransitions().length; i++) {
-            for (int n=this.getNumStates()+1; n<a.getTransitions()[0].length; n++) {
+        for (int i=offset; i<a.getTransitions().length+offset; i++) {
+            for (int n=offset; n<a.getTransitions()[0].length+offset; n++) {
 //                System.out.println("i: "+i+", n: "+n);
-                newTransitions[i][n].addAll(a.getTransitions()[ii][nn]);
+                allTransitions[i][n].addAll(a.getTransitions()[ii][nn]);
                 nn++;
             }
             nn = 0;
             ii++;
         }
 
-        // @par: acceptingStates
-        Set<Integer> newSet = new TreeSet<>();
-        newSet.addAll(this.getAcceptingStates());
-        newSet.addAll(a.getAcceptingStates());
+        // offset accepting states of this NFA so they're correct in union'ed NFA
+        Set<Integer> thisOffsetAcceptingState = new TreeSet<>();
+        for (Integer as: this.getAcceptingStates()) {
+            thisOffsetAcceptingState.add(as+1);
+        }
+        // offset accepting states of NFA a so they're correct in union'ed NFA
+        Set<Integer> aOffsetAcceptingState = new TreeSet<>();
+        for (Integer as: a.getAcceptingStates()) {
+            aOffsetAcceptingState.add(as+offset);
+        }
+        // merge all accepting states
+        Set<Integer> allAcceptingStates = new TreeSet<>();
+        allAcceptingStates.addAll(thisOffsetAcceptingState);
+        allAcceptingStates.addAll(aOffsetAcceptingState);
 
-        // @par: initialstate
 
-        // FIXME: Return is object to change
-        // Standardbuilder
-        NfaImpl resultingNfa = new NfaImpl(newTransitions.length, chars, newSet, 0);
-        resultingNfa.setTransitions(newTransitions);
+        System.out.println("\nTHIS:");
+        for (int i = 0; i < this.transitions.length; i++) {
+            for (int n = 0; n < this.transitions[0].length; n++) {
+                if (transitions[i][n].size() > 0 ) System.out.print(transitions[i][n] + " ");
+                else System.out.print("[_] ");
+            }
+            System.out.println();
+        }
+        System.out.println("\nA:");
+        for (int i = 0; i < a.getTransitions().length; i++) {
+            for (int n = 0; n < a.getTransitions()[0].length; n++) {
+                if (a.getTransitions()[i][n].size() > 0 ) System.out.print(a.getTransitions()[i][n] + " ");
+                else System.out.print("[_] ");
+            }
+            System.out.println();
+        }
+        System.out.println("\nUNION:");
+        for (int i = 0; i < allTransitions.length; i++) {
+            for (int n = 0; n < allTransitions[0].length; n++) {
+                if (allTransitions[i][n].size() > 0 ) System.out.print(allTransitions[i][n] + " ");
+                else System.out.print("[_] ");
+            }
+            System.out.println();
+        }
+
+
+
+
+        NfaImpl resultingNfa = new NfaImpl(allTransitions.length, allChars, allAcceptingStates, 0);
+        // set all transitions individually to ensure correct graph generation
+        for (int from = 0; from < allTransitions.length; from++) {
+            for (int to = 0; to < allTransitions[0].length; to++) {
+                if (allTransitions[from][to].size() > 0) {
+                    for (String sym: allTransitions[from][to]) {
+                        resultingNfa.setTransition(from, sym, to);
+//                        System.out.println("set: "+from+" -- "+sym+" -> "+to);
+                    }
+                }
+            }
+        }
+        // return union
         return resultingNfa;
+
+//        resultingNfa.setTransitions(allTransitions);
+
+
         //  Old returns -- old constructors
         //return new NfaImpl(chars, newTransitions, this.initialState);
         //return new NfaImpl(this.getNumStates() + a.getNumStates(), chars, newSet, this.initialState);
@@ -468,7 +527,7 @@ public class NfaImpl implements NFA {
     @Override
     public RSA toRSA() {
 
-        graphs.get(0).print();
+//        graphs.get(0).print();
 
         CompoundState rsaGraph = graphs.get(0).asCompoundStates();
         ArrayList<CompoundState> newStates = new ArrayList<>();
@@ -479,21 +538,32 @@ public class NfaImpl implements NFA {
         newStates.add(rsaGraph);
 
         CompoundState currentState = rsaGraph;
-        while(true) {
-            ArrayList<Pair<String, CompoundState>> nextArr = currentState.nextStates;
 
-            for (Pair<String,CompoundState> pair: nextArr) {
+        currentState.print();
+
+//        Set<String> processedTransitions = new TreeSet<>();
+        while(true) {
+            ArrayList<Pair<String, Integer>> nextArr = currentState.nextStates;
+//            System.out.println("len: "+nextArr.size());
+
+            for (Pair<String,Integer> pair: nextArr) {
+//                if (processedTransitions.contains(pair.))
+
                 boolean isDup = false;
                 for (CompoundState cs : newStates) {
-                    if (cs.equals(pair.getValue())) {
+//                        System.out.println("dup?");
+
+//                    if (cs.equals(pair.getValue())) {
+                    if (cs.compareTo(pair.getValue()) == 0) {
+//                        System.out.println("dup");
                         isDup = true;
                         break;
                     }
                 }
                 if (!isDup) {
-                    CompoundState addedCS = pair.getValue();
+                    CompoundState addedCS = CompoundState.compoundStates.get(pair.getValue());
                     // accepting state?
-                    for (StateGraph sg: pair.getValue().thisState) {
+                    for (StateGraph sg: CompoundState.compoundStates.get(pair.getValue()).thisState) {
                         if (this.acceptingStates.contains(sg.id)) {
 //                            System.out.println("add acc: "+newStates.size());
                             addedCS.isAcceptingState = true;
@@ -503,7 +573,8 @@ public class NfaImpl implements NFA {
                     newStates.add(addedCS);
                     remaining.add(addedCS);
 
-//                    System.out.println(addedCS.thisState.iterator().next().id);
+//                    processedTransitions.add(pair.getKey());
+//                    System.out.println("add "+addedCS.thisState.iterator().next().id);
                 }
             }
 
@@ -511,85 +582,7 @@ public class NfaImpl implements NFA {
             currentState = remaining.remove(0);
         }
 
-////        Set<CompoundState> newStates = new TreeSet<>();
-//        ArrayList<CompoundState> newStates = new ArrayList<>();
-//        CompoundState state;
-//        Set<StateGraph> sset = new TreeSet<>();
-//        sset.add(new StateGraph(this.initialState));
-//        state = new CompoundState(sset);
-//        newStates.add(state);
-////        Iterator iter = newStates.iterator();
-//        int idx = 0;
-//
-//        Set<Integer> newAcceptingStates = new TreeSet<>();
-//
-//        Set<CompoundState> processedStates = new TreeSet<>();
-//
-//        // assume there's only one complete graph left
-//        StateGraph graphRoot = this.graphs.get(0);
-//
-////        while(iter.hasNext()) {
-//        Set<Integer> procs = new TreeSet<>();
-//
-//        outer: while(true) {
-////            state = (CompoundState)iter.next();
-//            state = newStates.get(idx++);
-//
-////            System.out.println(idx);
-////            System.out.println("############# "+state.thisState.iterator().next().id);
-//
-//            for (Character c: this.characters) {
-//                Set<StateGraph> next = new TreeSet<>();
-//                boolean isAcceptingState = false;
-//                for (StateGraph subState : state.thisState) {
-//                    next.addAll(getNextGraphNodes(new TreeSet<>(), graphRoot, c + ""));
-//                }
-//
-//
-////                if (procs.size() > this.graphs.get(0).size()) {
-////                    break;
-////                }
-//
-////                System.out.println("##### "+c+", "+next.iterator().next().id);
-//                // create next state in RSA that's reachable from current state and check if it's accepting
-//                CompoundState nextCs = new CompoundState(next);
-//                for (StateGraph j: next) {
-//                    if (this.getAcceptingStates().contains(j.id)) {
-//                        isAcceptingState = true;
-//                        break;
-//                    }
-//                }
-//                nextCs.isAcceptingState = isAcceptingState;
-//
-//                // FIXME check for duplicates and maybe return already existing next CS?
-////                boolean askdjk = false;
-////                for (CompoundState cs: newStates) {
-////                    for (StateGraph g: cs.thisState) {
-////                        if (g.equals(nextCs)) {
-////                            System.out.println("slkdjfkdsjfldskjlkjdskfjdslkj");
-////                            state.nextStates.add(new Pair<>(""+c, cs));
-////                            askdjk = true;
-////                        }
-////                    }
-////                }
-////if (!askdjk) {
-//    // now add new RSA state to newStates
-//                state.nextStates.add(new Pair<>("" + c, nextCs));
-//                newStates.add(nextCs);
-//
-//                for (StateGraph sg: next) {
-//                    int s = procs.size();
-//                    procs.add(sg.id);
-//                    if (procs.size() == s) {
-//                        break outer;
-//                    }
-//                }
-//            }
-//
-//            processedStates.add(state);
-//
-//        }
-        System.out.println("> "+newStates.size());
+        System.out.println("pre-rsa size: "+newStates.size());
         Set<StateGraph> omegaSet = new TreeSet<>();
         omegaSet.add(new StateGraph(666));
         newStates.add(new CompoundState(omegaSet));
@@ -611,10 +604,10 @@ public class NfaImpl implements NFA {
 
         for (int i=0; i<newStatesArr.length; i++) {
 //        for (CompoundState cs: new) {
-            for (Pair<String, CompoundState> next: newStatesArr[i].nextStates) {
+            for (Pair<String, Integer> next: newStatesArr[i].nextStates) {
                 // extract transition symbol and next state
                 String sym = next.getKey();
-                CompoundState nextState = next.getValue();
+                CompoundState nextState = CompoundState.compoundStates.get(next.getValue());
                 // find index of next state
                 int nextIdx = -1;
                 for (int k = 0; k<newStatesArr.length; k++) {
@@ -657,7 +650,17 @@ public class NfaImpl implements NFA {
 //        }
 
         __RSAimpl rsa = new __RSAimpl(newStates.size(), this.characters, newAcceptingStates, 0);
-        rsa.setTransitions(rsaTransitions);
+//        rsa.setTransitions(rsaTransitions);
+        // set all transitions individually to ensure correct graph generation
+        for (int from = 0; from < rsaTransitions.length; from++) {
+            for (int to = 0; to < rsaTransitions[0].length; to++) {
+                if (rsaTransitions[from][to].size() > 0) {
+                    for (String sym: rsaTransitions[from][to]) {
+                        rsa.setTransition(from, sym, to);
+                    }
+                }
+            }
+        }
 
         return rsa;
     }
