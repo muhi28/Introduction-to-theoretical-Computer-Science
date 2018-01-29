@@ -15,7 +15,9 @@ public class NfaImpl implements NFA {
     private Set<Integer> acceptingStates;
     private int initialState;
 
-    private ArrayList<StateGraph> graphs;
+//    private ArrayList<StateGraph> graphs;
+
+//    private ArrayList<ArrayList<Set<String>>> atomicTransitions;
 
     public final String EPSILON = "";
 
@@ -34,15 +36,10 @@ public class NfaImpl implements NFA {
             }
         }
 
-        this.graphs = new ArrayList<>();
-        this.graphs.add(new StateGraph(this.initialState));
-//        this.atomicTransitions = new ArrayList<>();
-//        for (int i=0; i<numStates; i++) {
-//            this.atomicTransitions.add(new ArrayList<>());
-//            for (int n=0; n<numStates; n++) {
-//                this.atomicTransitions.get(i).add(new TreeSet<>());
-//            }
-//        }
+//        this.graphs = new ArrayList<>();
+//        this.graphs.add(new StateGraph(this.initialState));
+
+
     }
 
     // Constructor used for kleeneStar -- FIXME
@@ -55,9 +52,9 @@ public class NfaImpl implements NFA {
         acceptingStates = this.getAcceptingStates();
     }
 
-//    protected void setTransitions(Set<String>[][] transitions) {
-//        this.transitions = transitions;
-//    }
+    protected void setTransitions(Set<String>[][] transitions) {
+        this.transitions = transitions;
+    }
 
     public void setSymbols(Set<Character> characters) {
         this.characters = characters;
@@ -105,106 +102,101 @@ public class NfaImpl implements NFA {
         //  }
         transitions[fromState][toState].add(s);
 
-//        System.out.println(transitions[fromState][toState]);
-
-        // WHAT THE ACTUAL FUCK
-//        System.out.println("SET TRANSITION: s: "+s+", transitions: "+transitions[fromState][toState].toString());
-
-        // add atomic transitions to graph(s)
-        StateGraph fromGraph = null;
-        StateGraph toGraph = null;
-        int fromIdx = 0, toIdx = 0;
-        int idx = 0;
-        for (StateGraph sg: this.graphs) {
-            if (fromGraph == null) {
-                StateGraph fromResult = getGraphNode(sg, fromState);
-                if (fromResult != null) {
-                    fromGraph = fromResult;
-                    fromIdx = idx;
-                }
-            }
-            if (toGraph == null) {
-                StateGraph toResult = getGraphNode(sg, toState);
-                if (toResult != null) {
-                    fromGraph = toResult;
-                    toIdx = idx;
-                }
-            }
-
-            if (fromGraph != null && toGraph != null) break;
-
-            idx++;
-        }
-        // make sure that subgraphs exist
-        if (fromGraph == null) {
-            graphs.add(new StateGraph(fromState));
-            fromIdx = graphs.size()-1;
-            fromGraph = graphs.get(fromIdx);
-        }
-        if (toGraph == null) {
-            graphs.add(new StateGraph(toState));
-            toIdx = graphs.size()-1;
-            toGraph = graphs.get(toIdx);
-        }
-//        System.out.println("*** "+s);
-        // split s up into chars for intermediate states and add transitions
-        StateGraph fromNode = fromGraph;
-        char[] chars = s.toCharArray();
-        // edge case: EPSILON results in empty char array
-        if (s.equals(EPSILON)) {
-            chars = new char[]{'E'};
-        }
-
-        for (int ci = 0; ci<chars.length; ci++) {
-            StateGraph intNode;
-//            System.out.println("+ "+chars[ci]);
-            if (ci == chars.length-1) intNode = toGraph;
-            else intNode = new StateGraph();
-
-            // IMPORTANT - Consider corner case with EPSILON:
-            String symStr = chars[ci]+"";
-            if (s.equals(EPSILON)) symStr = EPSILON;
-            // add subgraph/node
-            fromNode.addGraph(intNode, symStr);
-
-//            System.out.println("ADD CHAR: "+chars[ci]+", "+ci);
-
-            fromNode = fromNode.getLast();
-        }
-
-        // add transition
-//        fromGraph.addGraph(toGraph, s);
-        // check if fromGraph and toGraph are in separate subgraphs
-        if (fromIdx != toIdx) {
-            // FIXME
-//            // TESTING
-//            int nextNum = fromGraph.next.size();
-
-            graphs.remove(toIdx);
-
-//            // TESTING
-//            if (fromGraph.next.size() != nextNum || fromGraph.next.get(fromGraph.next.size()-1) == null)
-//                System.out.println("FAIL");
-            if (toGraph == null) System.out.println("FAIL???");
-        }
-
-
-
-//        char[] chars = s.toCharArray();
-//        // look for node/subgraph with id fromState
-//        StateGraph fromNode = getGraphNode(graphRoot, fromState);
-//        // add transitions
-//        for (int ci = 0; ci<chars.length; ci++) {
-//            StateGraph newNode;
-//            if (ci == chars.length-1) newNode = new StateGraph(toState);
-//            else newNode = new StateGraph();
+//        // add atomic transitions to graph(s)
+//        StateGraph fromGraph = null;
+//        StateGraph toGraph = null;
+//        int fromIdx = 0, toIdx = 0;
+//        int idx = 0;
+//        for (StateGraph sg: this.graphs) {
+//            if (fromGraph == null) {
+//                StateGraph fromResult = getGraphNode(sg, fromState);
+//                if (fromResult != null) {
+//                    fromGraph = fromResult;
+//                    fromIdx = idx;
+//                }
+//            }
+//            if (toGraph == null) {
+//                StateGraph toResult = getGraphNode(sg, toState);
+//                if (toResult != null) {
+//                    fromGraph = toResult;
+//                    toIdx = idx;
+//                }
+//            }
 //
-//            fromNode.addGraph(newNode, ci+"");
+//            if (fromGraph != null && toGraph != null) break;
+//
+//            idx++;
+//        }
+//        // make sure that subgraphs exist
+//        if (fromGraph == null) {
+//            graphs.add(new StateGraph(fromState));
+//            fromIdx = graphs.size()-1;
+//            fromGraph = graphs.get(fromIdx);
+//        }
+//        if (toGraph == null) {
+//            graphs.add(new StateGraph(toState));
+//            toIdx = graphs.size()-1;
+//            toGraph = graphs.get(toIdx);
+//        }
+////        System.out.println("*** "+s);
+//        // split s up into chars for intermediate states and add transitions
+//        StateGraph fromNode = fromGraph;
+//        char[] chars = s.toCharArray();
+//        // edge case: EPSILON results in empty char array
+//        if (s.equals(EPSILON)) {
+//            chars = new char[]{'E'};
+//        }
+//
+//        for (int ci = 0; ci<chars.length; ci++) {
+//            StateGraph intNode;
+////            System.out.println("+ "+chars[ci]);
+//            if (ci == chars.length-1) intNode = toGraph;
+//            else intNode = new StateGraph();
+//
+//            // IMPORTANT - Consider corner case with EPSILON:
+//            String symStr = chars[ci]+"";
+//            if (s.equals(EPSILON)) symStr = EPSILON;
+//            // add subgraph/node
+//            fromNode.addGraph(intNode, symStr);
+//
+////            System.out.println("ADD CHAR: "+chars[ci]+", "+ci);
 //
 //            fromNode = fromNode.getLast();
 //        }
-
-//        graphs.get(0).print();
+//
+//        // add transition
+////        fromGraph.addGraph(toGraph, s);
+//        // check if fromGraph and toGraph are in separate subgraphs
+//        if (fromIdx != toIdx) {
+//            // FIXME
+////            // TESTING
+////            int nextNum = fromGraph.next.size();
+//
+//            graphs.remove(toIdx);
+//
+////            // TESTING
+////            if (fromGraph.next.size() != nextNum || fromGraph.next.get(fromGraph.next.size()-1) == null)
+////                System.out.println("FAIL");
+//            if (toGraph == null) System.out.println("FAIL???");
+//        }
+//
+//
+//
+////        char[] chars = s.toCharArray();
+////        // look for node/subgraph with id fromState
+////        StateGraph fromNode = getGraphNode(graphRoot, fromState);
+////        // add transitions
+////        for (int ci = 0; ci<chars.length; ci++) {
+////            StateGraph newNode;
+////            if (ci == chars.length-1) newNode = new StateGraph(toState);
+////            else newNode = new StateGraph();
+////
+////            fromNode.addGraph(newNode, ci+"");
+////
+////            fromNode = fromNode.getLast();
+////        }
+//
+////        graphs.get(0).print();
     }
 
     private StateGraph getGraphNode(StateGraph graph, int id) {
@@ -270,7 +262,7 @@ public class NfaImpl implements NFA {
 //        return getNextStatesStep(new TreeSet<Integer>(), state, s);
         Set<Integer> set = new TreeSet<>();
         Integer result = getNextStatesStep(state, s);
-        System.out.println(result);
+//        System.out.println(result);
         if (result != null) set.add(result);
         return set;
     }
@@ -373,30 +365,30 @@ public class NfaImpl implements NFA {
         allAcceptingStates.addAll(aOffsetAcceptingState);
 
 
-        System.out.println("\nTHIS:");
-        for (int i = 0; i < this.transitions.length; i++) {
-            for (int n = 0; n < this.transitions[0].length; n++) {
-                if (transitions[i][n].size() > 0 ) System.out.print(transitions[i][n] + " ");
-                else System.out.print("[_] ");
-            }
-            System.out.println();
-        }
-        System.out.println("\nA:");
-        for (int i = 0; i < a.getTransitions().length; i++) {
-            for (int n = 0; n < a.getTransitions()[0].length; n++) {
-                if (a.getTransitions()[i][n].size() > 0 ) System.out.print(a.getTransitions()[i][n] + " ");
-                else System.out.print("[_] ");
-            }
-            System.out.println();
-        }
-        System.out.println("\nUNION:");
-        for (int i = 0; i < allTransitions.length; i++) {
-            for (int n = 0; n < allTransitions[0].length; n++) {
-                if (allTransitions[i][n].size() > 0 ) System.out.print(allTransitions[i][n] + " ");
-                else System.out.print("[_] ");
-            }
-            System.out.println();
-        }
+//        System.out.println("\nTHIS:");
+//        for (int i = 0; i < this.transitions.length; i++) {
+//            for (int n = 0; n < this.transitions[0].length; n++) {
+//                if (transitions[i][n].size() > 0 ) System.out.print(transitions[i][n] + " ");
+//                else System.out.print("[_] ");
+//            }
+//            System.out.println();
+//        }
+//        System.out.println("\nA:");
+//        for (int i = 0; i < a.getTransitions().length; i++) {
+//            for (int n = 0; n < a.getTransitions()[0].length; n++) {
+//                if (a.getTransitions()[i][n].size() > 0 ) System.out.print(a.getTransitions()[i][n] + " ");
+//                else System.out.print("[_] ");
+//            }
+//            System.out.println();
+//        }
+//        System.out.println("\nUNION:");
+//        for (int i = 0; i < allTransitions.length; i++) {
+//            for (int n = 0; n < allTransitions[0].length; n++) {
+//                if (allTransitions[i][n].size() > 0 ) System.out.print(allTransitions[i][n] + " ");
+//                else System.out.print("[_] ");
+//            }
+//            System.out.println();
+//        }
 
 
 
@@ -524,145 +516,409 @@ public class NfaImpl implements NFA {
         return null;
     }
 
-    @Override
-    public RSA toRSA() {
-
-//        graphs.get(0).print();
-
-        CompoundState rsaGraph = graphs.get(0).asCompoundStates();
-        ArrayList<CompoundState> newStates = new ArrayList<>();
-        ArrayList<CompoundState> remaining = new ArrayList<>();
-        Set<Integer> newAcceptingStates = new TreeSet<>();
-
-        // add root first, then add next CompoundStates in while loop
-        newStates.add(rsaGraph);
-
-        CompoundState currentState = rsaGraph;
-
-        currentState.print();
-
-//        Set<String> processedTransitions = new TreeSet<>();
-        while(true) {
-            ArrayList<Pair<String, Integer>> nextArr = currentState.nextStates;
-//            System.out.println("len: "+nextArr.size());
-
-            for (Pair<String,Integer> pair: nextArr) {
-//                if (processedTransitions.contains(pair.))
-
-                boolean isDup = false;
-                for (CompoundState cs : newStates) {
-//                        System.out.println("dup?");
-
-//                    if (cs.equals(pair.getValue())) {
-                    if (cs.compareTo(pair.getValue()) == 0) {
-//                        System.out.println("dup");
-                        isDup = true;
-                        break;
-                    }
-                }
-                if (!isDup) {
-                    CompoundState addedCS = CompoundState.compoundStates.get(pair.getValue());
-                    // accepting state?
-                    for (StateGraph sg: CompoundState.compoundStates.get(pair.getValue()).thisState) {
-                        if (this.acceptingStates.contains(sg.id)) {
-//                            System.out.println("add acc: "+newStates.size());
-                            addedCS.isAcceptingState = true;
-                        }
-                    }
-
-                    newStates.add(addedCS);
-                    remaining.add(addedCS);
-
-//                    processedTransitions.add(pair.getKey());
-//                    System.out.println("add "+addedCS.thisState.iterator().next().id);
-                }
-            }
-
-            if (remaining.size() == 0) break;
-            currentState = remaining.remove(0);
-        }
-
-        System.out.println("pre-rsa size: "+newStates.size());
-        Set<StateGraph> omegaSet = new TreeSet<>();
-        omegaSet.add(new StateGraph(666));
-        newStates.add(new CompoundState(omegaSet));
-
-//        System.out.println("################################## toRSA ##### "+newStates.size());
-        Set<String>[][] rsaTransitions = (Set<String>[][]) new TreeSet<?>[newStates.size()][newStates.size()];
-        for (int i = 0; i < rsaTransitions.length; i++) {
-            for (int n = 0; n < rsaTransitions[0].length; n++) {
-                rsaTransitions[i][n] = new TreeSet<>();
-            }
-        }
-
-//        CompoundState[] newStatesArr = (CompoundState[]) newStates.toArray();
-        CompoundState[] newStatesArr = new CompoundState[newStates.size()];
-        int z = 0;
-        for (CompoundState cs: newStates) {
-            newStatesArr[z++] = cs;
-        }
-
-        for (int i=0; i<newStatesArr.length; i++) {
-//        for (CompoundState cs: new) {
-            for (Pair<String, Integer> next: newStatesArr[i].nextStates) {
-                // extract transition symbol and next state
-                String sym = next.getKey();
-                CompoundState nextState = CompoundState.compoundStates.get(next.getValue());
-                // find index of next state
-                int nextIdx = -1;
-                for (int k = 0; k<newStatesArr.length; k++) {
-                    if (newStatesArr[k].equals(nextState)) {
-                        nextIdx = k;
-                        break;
-                    }
-                }
-                if (nextIdx == -1) System.out.println("SCHEISSE");
-
-                // set transition between the 2 RSA states
-                rsaTransitions[i][nextIdx].add(sym);
-
-            }
-
-            // maybe register current RSA state as accepting state
-            if(newStatesArr[i].isAcceptingState) {
-                newAcceptingStates.add(i);
-//                    System.out.println("newAcc: "+i);
-            }
-        }
-
-        // add non-accepting state
-        for (int i = 0; i < rsaTransitions.length-1; i++) {
-            for(char c: this.characters) {
-                boolean transitionExists = false;
-                for (int n = 0; n < rsaTransitions[0].length-1; n++) {
-                    if (rsaTransitions[i][n].contains(c+"")) {
-                        transitionExists = true;
-                        break;
-                    }
-                }
-                if (!transitionExists) {
-                    rsaTransitions[i][rsaTransitions.length-1].add(c+"");
-                }
-            }
-        }
-//        for (char c: this.characters) {
-//            rsaTransitions[rsaTransitions.length - 1][rsaTransitions.length - 1].add(c+"");
+    private Set<String>[][] getAtomicTransitions() {
+//        System.out.println("\nBEFORE:");
+//        for (int i = 0; i < transitions.length; i++) {
+//            for (int n = 0; n < transitions[0].length; n++) {
+//                if (transitions[i][n].size() > 0 ) System.out.print(transitions[i][n] + " ");
+//                else System.out.print("[_] ");
+//            }
+//            System.out.println();
 //        }
 
-        __RSAimpl rsa = new __RSAimpl(newStates.size(), this.characters, newAcceptingStates, 0);
-//        rsa.setTransitions(rsaTransitions);
-        // set all transitions individually to ensure correct graph generation
-        for (int from = 0; from < rsaTransitions.length; from++) {
-            for (int to = 0; to < rsaTransitions[0].length; to++) {
-                if (rsaTransitions[from][to].size() > 0) {
-                    for (String sym: rsaTransitions[from][to]) {
-                        rsa.setTransition(from, sym, to);
+        // transfer all transitions
+        int newSize = getNumStates() * 10; // just to be sure
+        Set<String>[][] atomicTransitions = (Set<String>[][]) new TreeSet<?>[newSize][newSize];
+        for (int from = 0; from < newSize; from++) {
+            for (int to = 0; to < newSize; to++) {
+                if (from < getNumStates() && to < getNumStates()) {
+                    atomicTransitions[from][to] = transitions[from][to];
+                } else {
+                    atomicTransitions[from][to] = new TreeSet<>();
+                }
+            }
+        }
+        // create atomic transitions
+        int nextState = getNumStates();
+        for (int from = 0; from < getNumStates(); from++) {
+            for (int to = 0; to < getNumStates(); to++) {
+                // look for non-atomic transitions
+                for (String str: atomicTransitions[from][to]) {
+                    if (str.length() > 1) {
+                        // split up into more transitions with single characters as symbols/words
+                        int currentFrom = from;
+                        char[] chars = str.toCharArray();
+                        for (int i=0; i<chars.length; i++) {
+                            String s = chars[i]+"";
+                            int newStateIdx;
+                            if (i == chars.length - 1) { // if this is the last transition left
+                                newStateIdx = to;
+                            } else {
+                                newStateIdx = nextState++;
+                            }
+
+                            atomicTransitions[currentFrom][newStateIdx].add(s);
+                            currentFrom = newStateIdx;
+                        }
                     }
                 }
             }
+        }
+        // trim transition table
+        Set<String>[][] finalTransitions = (Set<String>[][]) new TreeSet<?>[nextState][nextState];
+        for (int from = 0; from < nextState; from++) {
+            for (int to = 0; to < nextState; to++) {
+                finalTransitions[from][to] = new TreeSet<>();
+                // ignore non-atomic transitions
+                for (String str: atomicTransitions[from][to]) {
+                    if (str.length() <= 1) finalTransitions[from][to].add(str);
+                }
+            }
+        }
+
+//        System.out.println("\nAFTER:");
+//        for (int i = 0; i < finalTransitions.length; i++) {
+//            for (int n = 0; n < finalTransitions[0].length; n++) {
+//                if (finalTransitions[i][n].size() > 0 ) System.out.print(finalTransitions[i][n] + " ");
+//                else System.out.print("[_] ");
+//            }
+//            System.out.println();
+//        }
+
+        return finalTransitions;
+    }
+
+    private Set<Integer> getStateGroup(int state, Set<String>[][] transitions, Set<Integer> currentStateGroup) {
+        int numStates = transitions.length;
+
+        int num = currentStateGroup.size();
+//        Set<Integer> currentStateGroup = new TreeSet<>();
+        currentStateGroup.add(state);
+
+        for (int to = 0; to < numStates; to++) {
+            if (transitions[state][to].contains(EPSILON)) {
+//                transitions[state][to].remove(EPSILON);
+
+                currentStateGroup.add(to);
+            }
+        }
+
+        // if nothing new was added, return
+        if (currentStateGroup.size() == num) {
+            return currentStateGroup;
+        }
+
+        // recursively add further ones if any
+        for (int next = 1; next < currentStateGroup.size(); next++) {
+            currentStateGroup.addAll(getStateGroup(next, transitions, currentStateGroup));
+        }
+
+        return currentStateGroup;
+    }
+
+    // find all state groups/compound states reachable in one step
+    private ArrayList<Pair<String, Set<Integer>>> findNextStateGroups(Set<Integer> group, Set<String>[][] transitions) {
+        ArrayList<Pair<String, Set<Integer>>> results = new ArrayList<>();
+
+        for (Integer state: group) {
+            for (int to = 0; to < transitions.length; to++) {
+                for (String sym: transitions[state][to]) {
+                    if (sym.equals(EPSILON)) continue; // FIXME ???
+
+                    // add state group reachable via sym
+                    Set<Integer> reachables = getStateGroup(to, transitions, new TreeSet<>());
+                    if (!reachables.isEmpty()) {
+                        // merge similar String's pairs if sym already is in results
+                        boolean merged = false;
+                        for (Pair<String, Set<Integer>> pair: results) {
+                            if (pair.getKey().equals(sym)) {
+                                pair.getValue().addAll(reachables);
+                                merged = true;
+                                break;
+                            }
+                        }
+                        // add new pair if no merge happened
+                        if (!merged) results.add(new Pair<>(sym, reachables));
+                    }
+                }
+            }
+        }
+
+        return results;
+    }
+
+    @Override
+    public RSA toRSA() {
+        System.out.println("\nBEFORE:");
+        for (int i = 0; i < transitions.length; i++) {
+            for (int n = 0; n < transitions[0].length; n++) {
+                if (transitions[i][n].size() > 0 ) System.out.print(transitions[i][n] + " ");
+                else System.out.print("[_] ");
+            }
+            System.out.println();
+        }
+
+
+        // split up non-atomic transitions
+        Set<String>[][] atomicTransitions = getAtomicTransitions();
+        // prepare RSA transition table
+        int numStates = atomicTransitions.length * 10;
+        Set<String>[][] rsaTransitions = (Set<String>[][]) new TreeSet<?>[numStates][numStates];
+        for (int from = 0; from < numStates; from++) {
+            for (int to = 0; to < numStates; to++) {
+                rsaTransitions[from][to] = new TreeSet<>();
+            }
+        }
+
+        // group states
+        int nextID = 0;
+        ArrayList<Pair<Integer, Set<Integer>>> allGroups = new ArrayList<>();
+        ArrayList<Pair<Integer, Set<Integer>>> remaining = new ArrayList<>();
+
+        Pair<Integer, Set<Integer>> group = new Pair<>(nextID++, getStateGroup(initialState, atomicTransitions, new TreeSet<>()));
+        remaining.add(group);
+
+        while (!remaining.isEmpty()) {
+            Pair<Integer, Set<Integer>> currentGroup = remaining.remove(0);
+
+            ArrayList<Pair<String, Set<Integer>>> nextStates = findNextStateGroups(currentGroup.getValue(), atomicTransitions);
+            // add all new states
+            for (Pair<String, Set<Integer>> nextPair: nextStates) {
+                // check if duplicate
+                int toId = 0;
+                boolean dup = false;
+                for (Pair<Integer, Set<Integer>> pair: allGroups) {
+                    if (dup) break;
+                    if (nextPair.getValue().equals(pair.getValue())) {
+                        toId = pair.getKey();
+                        dup = true;
+                    }
+                }
+                for (Pair<Integer, Set<Integer>> pair: remaining) {
+                    if (dup) break;
+                    if (nextPair.getValue().equals(pair.getValue())) {
+                        toId = pair.getKey();
+                        dup = true;
+                    }
+                }
+                if (!dup) {
+                    toId = nextID;
+                    remaining.add(new Pair<>(nextID++, nextPair.getValue()));
+                }
+
+                // register transitions in RSA table
+                int from = currentGroup.getKey();
+                int to   = toId;
+
+                rsaTransitions[from][to].add(nextPair.getKey());
+            }
+
+            allGroups.add(currentGroup);
+        }
+
+        // add non-accepting state for invalid words
+        Set<Integer> omegaSet = new TreeSet<>();
+        omegaSet.add(666);
+        allGroups.add(new Pair<>(nextID++, omegaSet));
+        // TODO set transitions to omega
+
+        // trim transition table
+        Set<String>[][] finalTransitions = (Set<String>[][]) new TreeSet<?>[allGroups.size()][allGroups.size()];
+        for (int from = 0; from < allGroups.size(); from++) {
+            for (int to = 0; to < allGroups.size(); to++) {
+                finalTransitions[from][to] = rsaTransitions[from][to];
+            }
+        }
+
+        // convert accepting states
+        Set<Integer> newAcceptingStates = new TreeSet<>();
+        for (Pair<Integer, Set<Integer>> pair: allGroups) {
+            for (Integer state: pair.getValue()) {
+                if (getAcceptingStates().contains(state)) {
+                    newAcceptingStates.add(pair.getKey());
+                    break;
+                }
+            }
+        }
+
+        __RSAimpl rsa = new __RSAimpl(finalTransitions.length, this.characters, newAcceptingStates, 0);
+        rsa.setTransitions(finalTransitions);
+
+
+        System.out.println("\nAFTER:");
+        for (int i = 0; i < finalTransitions.length; i++) {
+            for (int n = 0; n < finalTransitions[0].length; n++) {
+                if (finalTransitions[i][n].size() > 0 ) System.out.print(finalTransitions[i][n] + " ");
+                else System.out.print("[_] ");
+            }
+            System.out.println();
         }
 
         return rsa;
+
+//        boolean dup = false;
+//        for (Pair<Integer, Set<Integer>> pair: allGroups) {
+//            if (pair.getValue().equals(group.getValue())) {
+//                dup = true;
+//                break;
+//            }
+//        }
+//        if (dup) continue;
+
+//        for (int state = 0; state < numStates; state++) {
+//
+//
+//            Set<Pair<String, Set<Integer>>> nextStates = findNextStateGroups(group, atomicTransitions);
+//        }
+
+//return null;
+
+
+//        this.atomicTransitions = new
+//        for (int i=0; i<this.getNumStates(); i++) {
+//            this.atomicTransitions.add(new ArrayList<>());
+//            for (int n=0; n<this.getNumStates(); n++) {
+////                this.atomicTransitions.get(i).add(new TreeSet<>());
+//                this.atomicTransitions.get(i).get(n) = transitions[i][n];
+//            }
+//        }
+
+////        graphs.get(0).print();
+//
+//        CompoundState rsaGraph = graphs.get(0).asCompoundStates();
+//        ArrayList<CompoundState> newStates = new ArrayList<>();
+//        ArrayList<CompoundState> remaining = new ArrayList<>();
+//        Set<Integer> newAcceptingStates = new TreeSet<>();
+//
+//        // add root first, then add next CompoundStates in while loop
+//        newStates.add(rsaGraph);
+//
+//        CompoundState currentState = rsaGraph;
+//
+//        currentState.print();
+//
+////        Set<String> processedTransitions = new TreeSet<>();
+//        while(true) {
+//            ArrayList<Pair<String, Integer>> nextArr = currentState.nextStates;
+////            System.out.println("len: "+nextArr.size());
+//
+//            for (Pair<String,Integer> pair: nextArr) {
+////                if (processedTransitions.contains(pair.))
+//
+//                boolean isDup = false;
+//                for (CompoundState cs : newStates) {
+////                        System.out.println("dup?");
+//
+////                    if (cs.equals(pair.getValue())) {
+//                    if (cs.compareTo(pair.getValue()) == 0) {
+////                        System.out.println("dup");
+//                        isDup = true;
+//                        break;
+//                    }
+//                }
+//                if (!isDup) {
+//                    CompoundState addedCS = CompoundState.compoundStates.get(pair.getValue());
+//                    // accepting state?
+//                    for (StateGraph sg: CompoundState.compoundStates.get(pair.getValue()).thisState) {
+//                        if (this.acceptingStates.contains(sg.id)) {
+////                            System.out.println("add acc: "+newStates.size());
+//                            addedCS.isAcceptingState = true;
+//                        }
+//                    }
+//
+//                    newStates.add(addedCS);
+//                    remaining.add(addedCS);
+//
+////                    processedTransitions.add(pair.getKey());
+////                    System.out.println("add "+addedCS.thisState.iterator().next().id);
+//                }
+//            }
+//
+//            if (remaining.size() == 0) break;
+//            currentState = remaining.remove(0);
+//        }
+//
+//        System.out.println("pre-rsa size: "+newStates.size());
+//        Set<StateGraph> omegaSet = new TreeSet<>();
+//        omegaSet.add(new StateGraph(666));
+//        newStates.add(new CompoundState(omegaSet));
+//
+////        System.out.println("################################## toRSA ##### "+newStates.size());
+//        Set<String>[][] rsaTransitions = (Set<String>[][]) new TreeSet<?>[newStates.size()][newStates.size()];
+//        for (int i = 0; i < rsaTransitions.length; i++) {
+//            for (int n = 0; n < rsaTransitions[0].length; n++) {
+//                rsaTransitions[i][n] = new TreeSet<>();
+//            }
+//        }
+//
+////        CompoundState[] newStatesArr = (CompoundState[]) newStates.toArray();
+//        CompoundState[] newStatesArr = new CompoundState[newStates.size()];
+//        int z = 0;
+//        for (CompoundState cs: newStates) {
+//            newStatesArr[z++] = cs;
+//        }
+//
+//        for (int i=0; i<newStatesArr.length; i++) {
+////        for (CompoundState cs: new) {
+//            for (Pair<String, Integer> next: newStatesArr[i].nextStates) {
+//                // extract transition symbol and next state
+//                String sym = next.getKey();
+//                CompoundState nextState = CompoundState.compoundStates.get(next.getValue());
+//                // find index of next state
+//                int nextIdx = -1;
+//                for (int k = 0; k<newStatesArr.length; k++) {
+//                    if (newStatesArr[k].equals(nextState)) {
+//                        nextIdx = k;
+//                        break;
+//                    }
+//                }
+//                if (nextIdx == -1) System.out.println("SCHEISSE");
+//
+//                // set transition between the 2 RSA states
+//                rsaTransitions[i][nextIdx].add(sym);
+//
+//            }
+//
+//            // maybe register current RSA state as accepting state
+//            if(newStatesArr[i].isAcceptingState) {
+//                newAcceptingStates.add(i);
+////                    System.out.println("newAcc: "+i);
+//            }
+//        }
+//
+//        // add non-accepting state
+//        for (int i = 0; i < rsaTransitions.length-1; i++) {
+//            for(char c: this.characters) {
+//                boolean transitionExists = false;
+//                for (int n = 0; n < rsaTransitions[0].length-1; n++) {
+//                    if (rsaTransitions[i][n].contains(c+"")) {
+//                        transitionExists = true;
+//                        break;
+//                    }
+//                }
+//                if (!transitionExists) {
+//                    rsaTransitions[i][rsaTransitions.length-1].add(c+"");
+//                }
+//            }
+//        }
+////        for (char c: this.characters) {
+////            rsaTransitions[rsaTransitions.length - 1][rsaTransitions.length - 1].add(c+"");
+////        }
+//
+//        __RSAimpl rsa = new __RSAimpl(newStates.size(), this.characters, newAcceptingStates, 0);
+////        rsa.setTransitions(rsaTransitions);
+//        // set all transitions individually to ensure correct graph generation
+//        for (int from = 0; from < rsaTransitions.length; from++) {
+//            for (int to = 0; to < rsaTransitions[0].length; to++) {
+//                if (rsaTransitions[from][to].size() > 0) {
+//                    for (String sym: rsaTransitions[from][to]) {
+//                        rsa.setTransition(from, sym, to);
+//                    }
+//                }
+//            }
+//        }
+//
+//        return rsa;
     }
 
     @Override
