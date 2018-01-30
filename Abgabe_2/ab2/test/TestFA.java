@@ -12,6 +12,8 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ab2.NFA;
+import ab2.RSA;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -20,9 +22,6 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import ab2.FAFactory;
-import ab2.NFA;
-import ab2.RSA;
-import ab2.impl.NACHNAMEN.FAFactoryImpl;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestFA {
@@ -41,7 +40,7 @@ public class TestFA {
 
 	private static int gesamtPunkte = 0;
 
-	FAFactory factory = new FAFactoryImpl();
+	FAFactory factory = new ab2.impl.NACHNAMEN.FAFactoryImpl();
 
 	public static final Set<Character> chars = new HashSet<>();
 
