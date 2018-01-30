@@ -7,6 +7,7 @@ import ab2.fa.exceptions.IllegalCharacterException;
 import java.util.Set;
 
 public class __DFA extends __NFA implements DFA{
+    private int actState = 0;
 
     public __DFA(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
         super(numStates, characters, acceptingStates, initialState);
@@ -14,16 +15,29 @@ public class __DFA extends __NFA implements DFA{
 
     @Override
     public void reset() {
-
+        this.actState = getInitialState();
     }
 
     @Override
     public int getActState() {
-        return 0;
+        return this.actState;
     }
 
     @Override
     public int doStep(char c) throws IllegalArgumentException, IllegalStateException {
+        if(!getSymbols().contains(c)) throw new IllegalArgumentException();
+
+        for(int i = 0; i < getTransitions().length; i++) {
+            for(int j = 0; j < getTransitions()[0].length; j++){
+                if(getTransitions()[i][j].contains(c)){
+                    // IF is redundant as fucking fuck
+                    if(j < getNumStates() || j > getNumStates()) throw new IllegalStateException();
+                    else actState = j;
+                }
+            }
+        }
+
+
         return 0;
     }
 
@@ -36,6 +50,7 @@ public class __DFA extends __NFA implements DFA{
     public boolean isAcceptingState() {
         return false;
     }
+
 
     @Override
     public void setTransition(int fromState, char c, int toState) throws IllegalStateException, IllegalCharacterException {

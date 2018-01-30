@@ -7,13 +7,17 @@ import ab2.fa.exceptions.IllegalCharacterException;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Methods generating new NFA lose their Transmissions -> Implement setTransmissionTable
+ */
+
 public class __NFA implements NFA {
     private int numstates;
     private Set<Character> characters;
     private Set<Integer> acceptingStates;
     private int initialState;
-    private Set<String>[][] transitions;
 
+    private Set<String>[][] transitions;
     public final String EPSILON = "";
 
     public __NFA(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
@@ -116,6 +120,24 @@ public class __NFA implements NFA {
         return this.numstates;
     }
 
+    /**
+     * Overwrites Transitiontable of given NFA with given Table
+     * @param nfa
+     * @param newTable
+     * @return full NFA including overwritten Table
+     */
+    private NFA setTableAndFinalize(NFA nfa, Set<String>[][] newTable){
+        for(int i = 0; i < newTable.length; i++){
+            for(int j = 0; j < newTable[0].length; j++){
+// FIXME Not sure if this works properly
+                for(String s: newTable[i][j]){
+                    nfa.setTransition(i, s, j);
+                }
+            }
+        }
+        return nfa;
+    }
+
     @Override
     public NFA union(NFA a) {
         /** Numstates + new starting State **/
@@ -165,7 +187,19 @@ public class __NFA implements NFA {
             onionAcceptingStates.add(i + a_offset);
         }
 
-        return new __NFA(onionStates, onionCharacters, onionAcceptingStates, onionInitialState);
+        // Overwrite *this*
+        this.numstates = onionStates;
+        this.characters = onionCharacters;
+        this.acceptingStates = onionAcceptingStates;
+        this.initialState = onionInitialState;
+        this.transitions = onionTransitions;
+
+        return this;
+        /*
+        NFA onionNFA = setTableAndFinalize(new __NFA(onionStates, onionCharacters, onionAcceptingStates, onionInitialState), onionTransitions);
+        return onionNFA;
+         */
+
     }
 
     @Override
@@ -180,10 +214,11 @@ public class __NFA implements NFA {
         return (this.complement().union(a)).complement();
     }
 
+    // FIXME had a overwrite
     @Override
     public NFA concat(NFA a) {
         /** New Numstates **/
-        int catNumstates = this.numstates+a.getNumStates() + 1;     // As in Union
+        int catNumstates = this.numstates+a.getNumStates();     // As in Union
 
         /** New Characters **/
         Set<Character> catCharacters = this.characters;
@@ -192,7 +227,6 @@ public class __NFA implements NFA {
         /** New initState **/
         int catInitialState = 0;    // new Alpha
         // Find initialstates of previous machines
-        int this_offset = 1;
         int a_offset = this.getNumStates()+1;
 
 
@@ -204,11 +238,11 @@ public class __NFA implements NFA {
         for(int i = 0; i < transitions.length; i++){
             for(int j = 0; j < transitions[0].length; j++) {
                 if(!transitions[i][j].isEmpty()){
-                    catTransitions[i+this_offset][j+this_offset] = transitions[i][j];
+                    catTransitions[i][j] = transitions[i][j];
                 }
                 // TODO: Not sure if correct <-> Epsilon-Transitions from accepting M1 to  initial M2-states
                 if(acceptingStates.contains(j)){
-                    catTransitions[i+this_offset][j+this_offset].add(EPSILON);
+                    catTransitions[i][j].add(EPSILON);
                 }
             }
         }
@@ -225,35 +259,65 @@ public class __NFA implements NFA {
             catAcceptingStates.add(i+a_offset);
         }
 
-        return new __NFA(catNumstates, catCharacters, catAcceptingStates, catInitialState);
+        // Overwrite this automata
+        this.transitions = catTransitions;
+        this.numstates = catNumstates;
+        this.characters = catCharacters;
+        this.acceptingStates = catAcceptingStates;
+        this.initialState = catInitialState;
+        return this;
+        /*
+        NFA catNFA = setTableAndFinalize(new __NFA(catNumstates, catCharacters, catAcceptingStates, catInitialState), catTransitions);
+        return catNFA;
+
+ */
     }
 
     @Override
     public NFA complement() {
-        NFA complainedNFA = this.toRSA();
+        this.toRSA();
+
         // Numstates, Characters, initialstate and transition remain the same.
         Set<Integer> complainedAcceptingStates = new HashSet<>();
-
         /** Flip Accepting States! **/
         for(Integer as: acceptingStates){
             if(!acceptingStates.contains(as)){
                 complainedAcceptingStates.add(as);
             }
         }
-
         this.acceptingStates = complainedAcceptingStates;
-        return complainedNFA;
+        return this;
     }
 
     @Override
     public NFA kleeneStar() {
+        this.numstates = numstates+1;   // Add Alpha
 
-        return null;
+        // Offset on transitions
+        for(int i = 0; i < transitions.length; i++){
+            for(int j = 0; j < transitions[0].length; j++){
+                transitions[i+1][j+1] = transitions[i][j];
+                if(acceptingStates.contains(i)){
+                    transitions[i+1][initialState].add(EPSILON);
+                }
+            }
+        }
+        // Setup Epsilonedge from new initialstate
+        this.initialState = 0;
+        transitions[0][initialState].add(EPSILON);
+
+        return this;
     }
 
     @Override
     public NFA plus() {
-// TODO
+// TODO AcceptingStates -> Epsilon to Initial state
+        for(int i = 0; i < transitions.length; i++){
+            for(Integer a : acceptingStates) {
+
+            }
+        }
+
         return null;
     }
 
@@ -266,6 +330,7 @@ public class __NFA implements NFA {
     @Override
     public Boolean accepts(String w) throws IllegalCharacterException {
 // TODO
+
         return null;
     }
 
