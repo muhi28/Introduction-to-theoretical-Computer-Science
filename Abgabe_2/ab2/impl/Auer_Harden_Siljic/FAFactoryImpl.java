@@ -1,4 +1,4 @@
-package ab2.impl.NACHNAMEN;
+package ab2.impl.Auer_Harden_Siljic;
 
 import java.util.Set;
 
@@ -6,9 +6,6 @@ import ab2.DFA;
 import ab2.FAFactory;
 import ab2.NFA;
 import ab2.RSA;
-import ab2.impl.Auer_Harden_Siljic.__DFA;
-import ab2.impl.Auer_Harden_Siljic.__NFA;
-import ab2.impl.Auer_Harden_Siljic.__RSA;
 
 public class FAFactoryImpl implements FAFactory {
 
@@ -32,7 +29,6 @@ public class FAFactoryImpl implements FAFactory {
 
 	@Override
 	public RSA createPatternMatcher(String pattern) {
-
 		// TODO Expects RSA
 		return null;
 	}

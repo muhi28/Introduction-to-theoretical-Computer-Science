@@ -40,7 +40,7 @@ public class TestFA {
 
 	private static int gesamtPunkte = 0;
 
-	FAFactory factory = new ab2.impl.NACHNAMEN.FAFactoryImpl();
+	FAFactory factory = new ab2.impl.Auer_Harden_Siljic.FAFactoryImpl();
 
 	public static final Set<Character> chars = new HashSet<>();
 
