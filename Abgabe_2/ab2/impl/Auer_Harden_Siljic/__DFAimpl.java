@@ -50,6 +50,8 @@ public class __DFAimpl extends NfaImpl implements DFA {
         }
         // nothing found
         return null;
+//        // FIXME cheap bullshitting attempt
+//        return getNumStates()-1;
     }
 
     @Override

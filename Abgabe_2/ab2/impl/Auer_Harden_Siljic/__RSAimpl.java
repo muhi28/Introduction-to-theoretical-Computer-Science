@@ -13,6 +13,14 @@ public class __RSAimpl extends __DFAimpl implements RSA {
         super(numStates, characters, acceptingStates, initialState);
     }
 
+//    public __RSAimpl setAcceptingStates(Set<Integer> set) {
+//        FAFactory factory = new FAFactoryImpl();
+//        __RSAimpl rsa = new __RSAimpl(getNumStates(), getSymbols(), set, getInitialState());
+//        rsa.setTransitions(getTransitions());
+//
+//        return rsa;
+//    }
+
     @Override
     public RSA minimize() {
 
@@ -46,8 +54,13 @@ public class __RSAimpl extends __DFAimpl implements RSA {
                 boolean shouldStay = true;
                 // check for all symbols
                 for (Character symbol: getSymbols()) {
-                    int left = getNextState(tup.left, symbol);
-                    int right = getNextState(tup.right, symbol);
+                    Integer left = getNextState(tup.left, symbol);
+                    Integer right = getNextState(tup.right, symbol);
+
+                    // TODO fix this more cleanly/correctl?
+                    // if no next state was found
+                    if (left == null || right == null) break;
+
                     Tup checkTup = new Tup(left, right);
 
                     if (!equivTups.contains(checkTup) && !dTups.contains(checkTup)) {
