@@ -1,5 +1,6 @@
 package ab2.impl.Auer_Harden_Siljic;
 
+import ab2.DFA;
 import ab2.NFA;
 import ab2.RSA;
 import ab2.fa.exceptions.IllegalCharacterException;
@@ -317,7 +318,6 @@ public class __NFA implements NFA {
 
             }
         }
-
         return null;
     }
 
@@ -329,9 +329,11 @@ public class __NFA implements NFA {
 
     @Override
     public Boolean accepts(String w) throws IllegalCharacterException {
-// TODO
+        if(!getSymbols().contains(w)) throw new IllegalCharacterException();
 
-        return null;
+
+
+        return false;
     }
 
     @Override
@@ -373,13 +375,36 @@ public class __NFA implements NFA {
 
     @Override
     public boolean equals(Object b) {
-// TODO
+        // Enable overload to check on equal terms
+     // FIXME -thods below. Not sure if correct
+        if(this instanceof NFA) return equals((NFA) b);
+        if(this instanceof DFA) return equals((DFA) b);
+        if(this instanceof RSA) return equals((RSA) b);
+        // ABORT MISSION
         return false;
     }
 
+    private boolean equals(NFA b){
+        if(this.complement().intersection(b.complement()).getAcceptingStates().isEmpty()) return true;
+        return false;
+    }
+
+    private boolean equals(DFA b){
+        if(this.complement().intersection(b.complement()).getAcceptingStates().isEmpty()) return true;
+
+        return false;
+    }
+
+    private boolean equals(RSA b){
+        if(this.complement().intersection(b.complement()).getAcceptingStates().isEmpty()) return true;
+
+        return false;
+    }
+
+
     @Override
     public Boolean equalsPlusAndStar() {
-// TODO
-        return null;
+// TODO L* = L+ u {EPSILON}
+        return acceptsEpsilon();
     }
 }
