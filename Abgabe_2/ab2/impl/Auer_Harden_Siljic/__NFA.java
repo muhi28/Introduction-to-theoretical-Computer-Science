@@ -75,11 +75,13 @@ public class __NFA implements NFA {
 
     @Override
     public void setTransition(int fromState, String s, int toState) throws IllegalStateException, IllegalCharacterException {
+        /*
         // Char Exception
         if(!characters.contains(s)) throw new IllegalCharacterException();
         // State Exception
         if(fromState < numstates || fromState > numstates ||
                 toState < numstates || toState > numstates) throw new IllegalStateException();
+        */
 
         // Put string
         transitions[fromState][toState].add(s);
@@ -370,7 +372,20 @@ public class __NFA implements NFA {
     @Override
     public Boolean subSetOf(NFA a) {
 // TODO
-        return null;
+        Boolean check = Boolean.FALSE;
+
+
+        // Check :: Transitions
+        for (int f = 0; f < this.transitions.length; f++) {
+            for (int t = 0; t < this.transitions[0].length; t++) {
+                Set<String> s = a.getTransitions()[f][t];
+//                if (!s.equals(a.getTransitions()[f][t])) return false;    // BULLSHIT!
+//                if (!containsAllStrings(s, a.getTransitions()[f][t])) return false;
+                if (s.containsAll(getTransitions()[f][t])) check = Boolean.TRUE;
+            }
+        }
+
+        return check;
     }
 
     @Override
