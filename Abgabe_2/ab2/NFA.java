@@ -100,10 +100,10 @@ public interface NFA {
 	public NFA intersection(NFA a);
 	
 	/**
-	 * Erzeugt das Komplement des Automaten
+	 * Erzeugt die Differenz zu dem übergebenen Automaten
 	 * @return neuer Automat
 	 */
-	public NFA complement();
+	public NFA minus(NFA a);
 	
 	/**
 	 * Hängt den Automaten a an den Automaten an
@@ -111,6 +111,12 @@ public interface NFA {
 	 * @return neuer Automat
 	 */
 	public NFA concat(NFA a);
+	
+	/**
+	 * Erzeugt das Komplement des Automaten
+	 * @return neuer Automat
+	 */
+	public NFA complement();
 	
 	/**
 	 * Bildet den Kleene-Stern des Automaten
@@ -123,13 +129,7 @@ public interface NFA {
 	 * @return neuer Automat
 	 */
 	public NFA plus();
-	
-	/**
-	 * Erzeugt die Differenz zu dem übergebenen Automaten
-	 * @return neuer Automat
-	 */
-	public NFA minus(NFA a);
-	
+
 	/**
 	 * Erzeugt einen RSA, der die selbe Sprache akzeptiert
 	 * @return ein RSA
