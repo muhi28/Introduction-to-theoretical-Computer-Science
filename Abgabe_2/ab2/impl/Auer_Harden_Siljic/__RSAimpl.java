@@ -114,6 +114,17 @@ public class __RSAimpl extends __DFAimpl implements RSA {
         }
 
 
+        System.out.println("\nAFTER MINIMALIZATION:");
+        for (int i = 0; i < rsa.getTransitions().length; i++) {
+            for (int n = 0; n < rsa.getTransitions()[0].length; n++) {
+                if (rsa.getTransitions()[i][n].size() > 0 ) System.out.print(rsa.getTransitions()[i][n] + " ");
+                else System.out.print("[_] ");
+            }
+            System.out.println();
+        }
+        System.out.println(rsa.getNumStates()+" states");
+
+
 //        System.out.println("Minimize_end(): "+rsa.getNumStates());
 
         return rsa;

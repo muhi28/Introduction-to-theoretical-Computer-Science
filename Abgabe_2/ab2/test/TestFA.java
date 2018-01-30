@@ -1803,12 +1803,12 @@ public class TestFA {
         // Teste die Sprache der Automaten
         testLanguageNFA10(r10);
         testLanguageNFA11(r11);
-        testLanguageNFA11(r12);
+        testLanguageNFA11(r12); // FIXME
 
         // Teste die Eigenschaften der Automaten
         testPropertiesNFA10(r10);
         testPropertiesNFA11(r11);
-        testPropertiesNFA11(r12);
+        testPropertiesNFA11(r12); // FIXME
 
 
         gesamtPunkte++;

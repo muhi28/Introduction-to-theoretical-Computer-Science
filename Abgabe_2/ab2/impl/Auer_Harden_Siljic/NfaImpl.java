@@ -287,14 +287,21 @@ public class NfaImpl implements NFA {
     private Set<Integer> getNextStatesStep(Set<Integer> history, Set<Integer> results, int state, String s) {
         // add this state to history
         history.add(state);
-
+        if (s.length() == 0) results.add(state);
+        System.out.println("string: "+s+", state: "+state);
         for (int to=0; to<getNumStates(); to++) {
-            // ignore next states that were already visited in this branch
-            if (history.contains(to)) continue;
+            // ignore next states that were already visited in this branch if word was already read completely
+            if (history.contains(to) && s.length()==0) {
+                System.out.println("continue("+s+")");
+                continue;
+            }
 
             for (String sym: transitions[state][to]) {
                 // if this transition is possible with current s
+                System.out.print(sym+" in "+s+"? ("+to+") ");
+                System.out.println(transitions[state][to]);
                 if (s.startsWith(sym)) {
+                    System.out.println("found transition, continue with "+s.substring(sym.length()));
                     // remove this transition's symbol(s) from s and continue recursion with remaining part
                     results.addAll(getNextStatesStep(history, results, to, s.substring(sym.length())));
                 }
@@ -564,7 +571,7 @@ public class NfaImpl implements NFA {
         return null;
     }
 
-    private Set<String>[][] getAtomicTransitions() {
+    private Pair<Set<String>[][], Set<Integer>> getAtomicTransitions() {
 //        System.out.println("\nBEFORE:");
 //        for (int i = 0; i < transitions.length; i++) {
 //            for (int n = 0; n < transitions[0].length; n++) {
@@ -574,65 +581,217 @@ public class NfaImpl implements NFA {
 //            System.out.println();
 //        }
 
-        // transfer all transitions
+        // transfer all transitions // OUTDATED
+        // create new transition table for atomic transitions
         int newSize = getNumStates() * 10; // just to be sure
         Set<String>[][] atomicTransitions = (Set<String>[][]) new TreeSet<?>[newSize][newSize];
         for (int from = 0; from < newSize; from++) {
             for (int to = 0; to < newSize; to++) {
-                if (from < getNumStates() && to < getNumStates()) {
-                    atomicTransitions[from][to] = transitions[from][to];
-                } else {
+//                if (from < getNumStates() && to < getNumStates()) {
+//                    atomicTransitions[from][to] = transitions[from][to];
+//                } else {
                     atomicTransitions[from][to] = new TreeSet<>();
-                }
+//                }
             }
         }
-        // create atomic transitions
-        int nextState = getNumStates();
-        for (int from = 0; from < getNumStates(); from++) {
-            for (int to = 0; to < getNumStates(); to++) {
-                // look for non-atomic transitions
-                for (String str: atomicTransitions[from][to]) {
-                    if (str.length() > 1) {
-                        System.out.println(str);
-                        // split up into more transitions with single characters as symbols/words
-                        int currentFrom = from;
-                        char[] chars = str.toCharArray();
-                        for (int i=0; i<chars.length; i++) {
-                            String s = chars[i]+"";
-//                            System.out.println("char: "+s);
-                            boolean dup = false;
-                            for (int n=0; n<newSize; n++) {
-//                                System.out.println(atomicTransitions[currentFrom][n]+", "+s);
-                                if (atomicTransitions[currentFrom][n].contains(s)) {
-                                    currentFrom = n;
 
-                                    dup = true;
+        // create atomic transitions
+        int nextState = 0;
+        int currentState = 0;
+        int currentAtomicState = 0;
+//        int jumpToState = 0;
+        ArrayList<Pair<Integer, Integer>> stateMap = new ArrayList<>();
+        stateMap.add(new Pair<>(0, 0));
+        // remap accepting states
+        Set<Integer> atomicAcceptingStates = new TreeSet<>();
+
+        int stateCount = 1;
+
+        while (true) {
+            for (int to = 0; to < getNumStates(); to++) {
+
+                ArrayList<Pair<Integer, Integer>> remaps = new ArrayList<>();
+                for (Pair<Integer, Integer> mapping : stateMap) {
+                    if (mapping.getKey() == currentState) {
+                        currentAtomicState = mapping.getValue();
+//                        System.out.println("mapped to "+currentAtomicState);
+                        remaps.add(mapping);
+                    }
+                }
+
+                do {
+                    for (Pair<Integer, Integer> mapping : remaps) {
+                        if (mapping.getKey() == currentState) {
+                            currentAtomicState = mapping.getValue();
+                            break;
+                        }
+                    }
+                    if (remaps.size() > 0) remaps.remove(0);
+
+                    // look for non-atomic transitions
+                    for (String str : transitions[currentState][to]) {
+                        // if already atomic transition, transfer directly to new table
+                        if (str.length() <= 1) {
+                            boolean mapped = false;
+                            for (Pair<Integer, Integer> pair : stateMap) {
+                                if (pair.getKey() == to) {
+                                    atomicTransitions[currentAtomicState][pair.getValue()].add(str);
+
+                                    stateCount++;
+                                    currentAtomicState = pair.getValue();
+
+                                    if (getAcceptingStates().contains(to)) {
+                                        atomicAcceptingStates.add(pair.getValue());
+                                    }
+
+                                    mapped = true;
                                     break;
                                 }
                             }
-                            if (dup) continue;
+                            if (!mapped) {
+                                atomicTransitions[currentAtomicState][++nextState].add(str);
+                                stateCount++;
 
-//                            System.out.println("nodup, " + currentFrom);
+                                if (getAcceptingStates().contains(to)) {
+                                    atomicAcceptingStates.add(nextState);
+                                }
 
-                            int newStateIdx;
-                            if (i == chars.length - 1) { // if this is the last transition left
-                                newStateIdx = to;
-                            } else {
-                                newStateIdx = nextState++;
+                                currentAtomicState = nextState;
+                                // add mapping if not already existing
+                                boolean alreadyMapped = false;
+                                for (Pair<Integer, Integer> mapping : stateMap) {
+                                    if (mapping.getKey() == to) {
+                                        alreadyMapped = true;
+                                        break;
+                                    }
+                                }
+                                if (!alreadyMapped) stateMap.add(new Pair<>(to, currentAtomicState));
+                            }
+//                        currentState = to;
+//                        jumpToState = to;
+                        } else { // non-atomic transition
+                            // split up into multiple one-character transitions
+                            char[] chars = str.toCharArray();
+                            for (int ci = 0; ci < chars.length; ci++) {
+                                String s = chars[ci] + "";
+
+                                boolean dup = false;
+                                // look for identical transition, if one was found reuse it
+                                for (int k = 0; k < newSize; k++) {
+                                    if (atomicTransitions[currentAtomicState][k].contains(s)) {
+                                        currentAtomicState = k; // follow existing transition
+                                        dup = true;
+                                        break;
+                                    }
+                                }
+                                // if no identical transition, create the required one
+                                if (!dup) {
+                                    atomicTransitions[currentAtomicState][++nextState].add(s);
+                                    stateCount++;
+                                    currentAtomicState = nextState;
+                                }
+                            }
+                            // add mapping if not already existing
+//                        boolean alreadyMapped = false;
+//                        for (Pair<Integer, Integer> mapping: stateMap) {
+//                            if (mapping.getKey() == to) {
+//                                alreadyMapped = true;
+//                                break;
+//                            }
+//                        }
+//                        if (!alreadyMapped) stateMap.add(new Pair<>(to, currentAtomicState));
+                            stateMap.add(new Pair<>(to, currentAtomicState));
+
+                            if (getAcceptingStates().contains(to)) {
+                                atomicAcceptingStates.add(currentAtomicState); // ???
                             }
 
-                            atomicTransitions[currentFrom][newStateIdx].add(s);
-//                            System.out.println(atomicTransitions[currentFrom][newStateIdx]);
-                            currentFrom = newStateIdx;
+                            // FIXME maybe after currentState++ below?
+                            currentAtomicState = currentState;
+//                        stateMap.add(new Pair<>(to, currentAtomicState));
+
+//                        currentState = to;
+//                        jumpToState = to;
                         }
                     }
-                }
+
+                } while(remaps.size() > 0);
             }
+            currentState++;
+            if (currentState == getNumStates()) break;
         }
+
+
+//        // remap accepting states
+//        Set<Integer> atomicAcceptingStates = new TreeSet<>();
+//        for (Integer i: getAcceptingStates()) {
+//            // look for mapping
+//            for (Pair<Integer, Integer> mapping: stateMap) {
+//                if (mapping.getKey() == i) {
+//                    atomicAcceptingStates.add(mapping.getValue());
+//                }
+//            }
+//        }
+//                    if (str.length() > 1) {
+
+
+//        // create atomic transitions
+//        int nextState = 0;//getNumStates();
+//        for (int from = 0; from < getNumStates(); from++) {
+//            for (int to = 0; to < getNumStates(); to++) {
+//                // look for non-atomic transitions
+//                for (String str: atomicTransitions[from][to]) {
+//                    // if already atomic transition, transfer directly to new table
+//                    if (str.length() <= 1) {
+//                        atomicTransitions[nextState++][nextState].add(str);
+//                    } else { // non-atomic transitions
+//
+//                    }
+//
+////                    if (str.length() > 1) {
+////                        System.out.println(str);
+////                        // split up into more transitions with single characters as symbols/words
+////                        int currentFrom = from;
+////                        char[] chars = str.toCharArray();
+////                        for (int i=0; i<chars.length; i++) {
+////                            String s = chars[i]+"";
+//////                            System.out.println("char: "+s);
+////                            boolean dup = false;
+////                            for (int n=0; n<newSize; n++) {
+//////                                System.out.println(atomicTransitions[currentFrom][n]+", "+s);
+////                                if (atomicTransitions[currentFrom][n].contains(s)) {
+////                                    currentFrom = n;
+////
+////                                    dup = true;
+////                                    break;
+////                                }
+////                            }
+////                            if (dup) continue;
+////
+//////                            System.out.println("nodup, " + currentFrom);
+////
+////                            int newStateIdx = 0;
+////                            if (i == chars.length - 1) { // if this is the last transition left
+////                                newStateIdx = to;
+////
+////                                // FIXME
+////                                if (to == currentFrom) newStateIdx = nextState++;
+////                            } else {
+////                                newStateIdx = nextState++;
+////                            }
+////
+////                            atomicTransitions[currentFrom][newStateIdx].add(s);
+//////                            System.out.println(atomicTransitions[currentFrom][newStateIdx]);
+////                            currentFrom = newStateIdx;
+////                        }
+//                    }
+//                }
+//            }
+//        }
         // trim transition table
-        Set<String>[][] finalTransitions = (Set<String>[][]) new TreeSet<?>[nextState][nextState];
-        for (int from = 0; from < nextState; from++) {
-            for (int to = 0; to < nextState; to++) {
+        Set<String>[][] finalTransitions = (Set<String>[][]) new TreeSet<?>[stateCount][stateCount];
+        for (int from = 0; from < stateCount; from++) {
+            for (int to = 0; to < stateCount; to++) {
                 finalTransitions[from][to] = new TreeSet<>();
                 // ignore non-atomic transitions
                 for (String str: atomicTransitions[from][to]) {
@@ -650,7 +809,7 @@ public class NfaImpl implements NFA {
             System.out.println();
         }
 
-        return finalTransitions;
+        return new Pair<>(finalTransitions, atomicAcceptingStates);
     }
 
     private Set<Integer> getStateGroup(int state, Set<String>[][] transitions, Set<Integer> currentStateGroup) {
@@ -749,7 +908,10 @@ public class NfaImpl implements NFA {
 
 
         // split up non-atomic transitions
-        Set<String>[][] atomicTransitions = getAtomicTransitions();
+        Pair<Set<String>[][], Set<Integer>> atomicData = getAtomicTransitions();
+        Set<String>[][] atomicTransitions = atomicData.getKey();
+        Set<Integer> atomicAcceptingStates = atomicData.getValue();
+
         // prepare RSA transition table
         int numStates = atomicTransitions.length * 10;
         Set<String>[][] rsaTransitions = (Set<String>[][]) new TreeSet<?>[numStates][numStates];
@@ -849,12 +1011,13 @@ public class NfaImpl implements NFA {
         }
 
         // TODO set transitions to omega
-        for (int from = 0; from < getNumStates(); from++) {
+        for (int from = 0; from < finalTransitions.length-1; from++) { // remove -1 for adding transitions of omega to itself(but creates cycles!!!)
             for (char sym : getSymbols()) {
                 String symStr = sym + "";
 
                 boolean hasTransition = false;
-                for (int to = 0; to < getNumStates(); to++) {
+                for (int to = 0; to < finalTransitions.length; to++) {
+//                    System.out.println();
                     if (finalTransitions[from][to].contains(symStr)) {
                         hasTransition = true;
                         break;
@@ -862,7 +1025,7 @@ public class NfaImpl implements NFA {
                 }
                 // no transition for this symbol -> set to omega
                 if (!hasTransition) {
-                    finalTransitions[from][getNumStates()-1].add(symStr);
+                    finalTransitions[from][finalTransitions.length-1].add(symStr);
                 }
             }
         }
@@ -871,7 +1034,8 @@ public class NfaImpl implements NFA {
         Set<Integer> newAcceptingStates = new TreeSet<>();
         for (Pair<Integer, Set<Integer>> pair: allGroups) {
             for (Integer state: pair.getValue()) {
-                if (getAcceptingStates().contains(state)) {
+//                if (getAcceptingStates().contains(state)) {
+                if (atomicAcceptingStates.contains(state)) {
                     newAcceptingStates.add(pair.getKey());
                     break;
                 }
@@ -889,11 +1053,12 @@ public class NfaImpl implements NFA {
             newAcceptingStates = switchedAcceptingStates;
         }
 
+        System.out.println("new accepting states: "+newAcceptingStates);
+
         __RSAimpl rsa = new __RSAimpl(finalTransitions.length, this.characters, newAcceptingStates, 0);
         rsa.setTransitions(finalTransitions);
 
-
-        System.out.println("\nAFTER:");
+        System.out.println("\nAFTER RSA:");
         for (int i = 0; i < finalTransitions.length; i++) {
             for (int n = 0; n < finalTransitions[0].length; n++) {
                 if (finalTransitions[i][n].size() > 0 ) System.out.print(finalTransitions[i][n] + " ");
@@ -1083,9 +1248,16 @@ public class NfaImpl implements NFA {
     }
 
     private boolean acceptsRecursive(int s, String w) {
-        Set<Integer> endState = this.getNextStates(s, w);
+        Set<Integer> nextStates = this.getNextStates(s, w);
 
-        return endState.size() > 0;
+        for (Integer i: nextStates) {
+            if (getAcceptingStates().contains(i)) {
+                return true;
+            }
+        }
+
+//        return endState.size() > 0;
+        return false;
 
 //        for (int as: this.acceptingStates) {
 //            if (reachableStates.contains(as)) {
@@ -1200,8 +1372,10 @@ public class NfaImpl implements NFA {
 
     @Override
     public Boolean isInfinite() {
+//        System.out.println("transition table size: "+transitions.length);
         for (int from = 0; from < transitions.length; from++) {
             for (int to = 0; to < transitions[0].length; to++) {
+//                System.out.println("transitions at "+from+", "+to+": "+transitions[from][to]);
                 if (transitions[from][to].size() > 0) {
                     if (from >= to) return true;
                 }
@@ -1262,22 +1436,22 @@ public class NfaImpl implements NFA {
 
     @Override
     public boolean equals(Object b) {
-        RSA thisRsa = this.toRSA();
-        RSA otherRsa = ((NFA) b).toRSA();
-
-        // Check :: Alphabet != same -> Error
-        if (!this.characters.equals(otherRsa.getSymbols())) return false;
-
-        if (otherRsa.getNumStates() != thisRsa.getNumStates()) return false;
-
-        // Check :: Transitions
-        // FIXME: Better check on substrings, not whole words
-        for (int f=0; f<thisRsa.getTransitions().length; f++) {
-            for (int t=0; t<thisRsa.getTransitions()[0].length; t++) {
-                Set<String> s = thisRsa.getTransitions()[f][t];
-                if (!s.equals(otherRsa.getTransitions()[f][t])) return false;
-            }
-        }
+//        RSA thisRsa = this.toRSA();
+//        RSA otherRsa = ((NFA) b).toRSA();
+//
+//        // Check :: Alphabet != same -> Error
+//        if (!thisRsa.getSymbols().equals(otherRsa.getSymbols())) return false;
+//
+//        if (otherRsa.getNumStates() != thisRsa.getNumStates()) return false;
+//
+//        // Check :: Transitions
+//        // FIXME: Better check on substrings, not whole words
+//        for (int f=0; f<thisRsa.getTransitions().length; f++) {
+//            for (int t=0; t<thisRsa.getTransitions()[0].length; t++) {
+//                Set<String> s = thisRsa.getTransitions()[f][t];
+//                if (!s.equals(otherRsa.getTransitions()[f][t])) return false;
+//            }
+//        }
         return true;
         // TODO Holzhammermethode?
     }
