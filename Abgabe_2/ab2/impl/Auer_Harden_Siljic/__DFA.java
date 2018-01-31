@@ -24,35 +24,18 @@ public class __DFA extends __NFA implements DFA{
 
     @Override
     public int doStep(char c) throws IllegalArgumentException, IllegalStateException {
-        if(!getSymbols().contains(c)) throw new IllegalArgumentException();
-        int nextState = -1;
-
-        for(int i = 0; i < getTransitions().length; i++) {
-            for(int j = 0; j < getTransitions()[0].length; j++){
-                if(getTransitions()[i][j].contains(c+"")){
-                    // IF is redundant as fucking fuck
-                    nextState = j;
-                }
-            }
-        }
-
-        if(nextState < 0 || nextState > getNumStates()) throw new IllegalStateException();
-        return nextState;
+        return getNextState(this.actState, c);
     }
 
     @Override
     public Integer getNextState(int s, char c) throws IllegalCharacterException, IllegalStateException {
-        if(!getSymbols().contains(c)) throw new IllegalCharacterException();
-        if(s < getNumStates() || s > getNumStates()) throw new IllegalStateException();
-
-        // FIXME brainfucked right now
+        // TODO: Exceptionhandling
         int nextState = -1;
         for(int i = 0; i < getTransitions().length; i++){
            if(getTransitions()[s][i].contains(c+"")){
                nextState = i;
            }
         }
-
         return nextState;
     }
 
@@ -65,9 +48,8 @@ public class __DFA extends __NFA implements DFA{
 
     @Override
     public void setTransition(int fromState, char c, int toState) throws IllegalStateException, IllegalCharacterException {
-        if(fromState < getNumStates() || fromState > getNumStates() ||
-                toState < getNumStates() || toState > getNumStates()) throw new IllegalStateException();
-        if(!getSymbols().contains(c+"")) throw new IllegalCharacterException();
+        //if(fromState < getNumStates() || fromState > getNumStates() ||
+        //        toState < getNumStates() || toState > getNumStates()) throw new IllegalStateException();
 
         setTransition(fromState, c+"", toState);
     }

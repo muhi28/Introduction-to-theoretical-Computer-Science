@@ -8,10 +8,6 @@ import ab2.fa.exceptions.IllegalCharacterException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Methods generating new NFA lose their Transmissions -> Implement setTransmissionTable
- */
-
 public class __NFA implements NFA {
     private int numstates;
     private Set<Character> characters;
@@ -20,6 +16,9 @@ public class __NFA implements NFA {
 
     private Set<String>[][] transitions;
     public final String EPSILON = "";
+    public final int DEBUG = 1;             /** Debug-Codes:
+
+                                                */
 
     public __NFA(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
     this.numstates = numStates;
@@ -62,7 +61,7 @@ public class __NFA implements NFA {
 
     @Override
     public boolean isAcceptingState(int s) throws IllegalStateException {
-        if(s > numstates || s < numstates) throw new IllegalStateException();
+//        if(s > numstates || s < numstates) throw new IllegalStateException();
 
         if(acceptingStates.contains(s)) return true;
         else return false;
@@ -75,13 +74,11 @@ public class __NFA implements NFA {
 
     @Override
     public void setTransition(int fromState, String s, int toState) throws IllegalStateException, IllegalCharacterException {
-        /*
         // Char Exception
-        if(!characters.contains(s)) throw new IllegalCharacterException();
+//        if(!characters.contains(s)) throw new IllegalCharacterException();
         // State Exception
-        if(fromState < numstates || fromState > numstates ||
-                toState < numstates || toState > numstates) throw new IllegalStateException();
-        */
+//        if(fromState < numstates || fromState > numstates ||
+//                toState < numstates || toState > numstates) throw new IllegalStateException();
 
         // Put string
         transitions[fromState][toState].add(s);
@@ -90,7 +87,7 @@ public class __NFA implements NFA {
     @Override
     public void clearTransitions(int fromState, String s) throws IllegalStateException {
         // State Exception
-        if(fromState > numstates || fromState < numstates) throw new IllegalStateException();
+//        if(fromState > numstates || fromState < numstates) throw new IllegalStateException();
 
         for(int i = 0; i < transitions[0].length; i++) {
             if(transitions[fromState][i].contains(s)){
@@ -103,8 +100,8 @@ public class __NFA implements NFA {
     @Override
     public Set<Integer> getNextStates(int state, String s) throws IllegalCharacterException, IllegalStateException {
         // Exceptions
-        if(!characters.contains(s)) throw new IllegalCharacterException();
-        if(state > numstates || state < numstates) throw new IllegalStateException();
+//        if(!characters.contains(s)) throw new IllegalCharacterException();
+//        if(state > numstates || state < numstates) throw new IllegalStateException();
 
         Set<Integer> nextStates = new HashSet<Integer>();
 
@@ -326,15 +323,62 @@ public class __NFA implements NFA {
     @Override
     public RSA toRSA() {
 // TODO
-        return null;
+        // Change of params.
+        /** numstates = n^r, n = #states, r = #characters -- In Worst Case**/
+        // FIXME
+        int rsaNumstates = (numstates + 3)*characters.size();
+
+        /** New Alphabet. RSA does not contain Epsilon.**/
+        Set<Character> rsaCharacters = new HashSet<>();
+        for(Character c: characters){
+            // FIXME how the fuck is this done
+            if(c.compareTo(EPSILON.toCharArray()[0]) != 0){
+                // if C != Epsilon -> Add to rsaChars
+                rsaCharacters.add(c);
+            }
+        }
+        /**New Initialstate. Set up just to be sure**/
+        int rsaInitialstate = 0;
+
+        // FIXME subject to change
+        Set<Integer> rsaAcceptingStates = this.acceptingStates;
+
+        RSA morph = new __RSA(rsaNumstates, rsaCharacters, rsaAcceptingStates, rsaInitialstate);
+
+        /** Complete overhaul of tables and states in general -- Dont overwrite old one as to have a lookup**/
+        // Fixme Alternatives to this fuckshit of a ploughin code
+        //// Problem: We have no method to properly handle the transitiontables
+
+        // Copy table to allow view & recreate this 1
+        Set<String>[][] nfaTransitions = this.transitions;
+        transitions = initializeTransitionTable(rsaNumstates);
+
+        for(int i = 0; i < nfaTransitions.length; i++){            // For every fromstate
+            for(int j = 0; j < nfaTransitions[0].length; j++){     // .. for every toState
+                for(String s: nfaTransitions[i][j]){               // .. for every String within table
+                    char[] singleTransition = s.toCharArray();        // .. transform to transition
+                    if(singleTransition.length > 0){                  // .. (but only if string not empty)
+                        for(int k = 0; k < singleTransition.length; k++){
+                            // FIXME transition table is off. Vgl.: Skizze
+                            if(k == singleTransition.length - 1){
+                                // This is the last element of the string. Point towards correct state
+                                setTransition(i, singleTransition[k]+"", j);
+                            }else{
+                                // Required offset not to point to ''correct'' state
+                                setTransition(i+numstates, singleTransition[k]+"", j+numstates);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return morph;
     }
 
     @Override
     public Boolean accepts(String w) throws IllegalCharacterException {
-        if(!getSymbols().contains(w)) throw new IllegalCharacterException();
-
-
-
+//        if(!getSymbols().contains(w)) throw new IllegalCharacterException();
         return false;
     }
 
@@ -372,20 +416,7 @@ public class __NFA implements NFA {
     @Override
     public Boolean subSetOf(NFA a) {
 // TODO
-        Boolean check = Boolean.FALSE;
-
-
-        // Check :: Transitions
-        for (int f = 0; f < this.transitions.length; f++) {
-            for (int t = 0; t < this.transitions[0].length; t++) {
-                Set<String> s = a.getTransitions()[f][t];
-//                if (!s.equals(a.getTransitions()[f][t])) return false;    // BULLSHIT!
-//                if (!containsAllStrings(s, a.getTransitions()[f][t])) return false;
-                if (s.containsAll(getTransitions()[f][t])) check = Boolean.TRUE;
-            }
-        }
-
-        return check;
+        return null;
     }
 
     @Override
