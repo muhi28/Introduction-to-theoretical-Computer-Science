@@ -391,7 +391,7 @@ public class __NFA implements NFA {
     public Boolean acceptsNothing() {
     // FIXME This only assumes true if set is empty.
         if(acceptingStates.isEmpty()) return true;
-        else if(!acceptsEpsilonOnly() && !acceptsEpsilon()) return true;
+        else if(acceptsEpsilonOnly() && !acceptsEpsilon()) return true;
         return false;
     }
 
