@@ -16,10 +16,9 @@ public class __NFA implements NFA {
 
     private Set<String>[][] transitions;
     public final String EPSILON = "";
-    public final int DEBUG = 1;             /** Debug-Codes:
-
+    public final int DEBUG = 1;             /** Debug-Codes: Automata-Method
+                                                1 -- NFA 2 -- DFA 3 -- RSA
                                                 */
-
     public __NFA(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
     this.numstates = numStates;
     this.characters = characters;
@@ -94,7 +93,6 @@ public class __NFA implements NFA {
                 transitions[fromState][i].remove(s);
             }
         }
-
     }
 
     @Override
@@ -120,27 +118,9 @@ public class __NFA implements NFA {
         return this.numstates;
     }
 
-    /**
-     * Overwrites Transitiontable of given NFA with given Table
-     * @param nfa
-     * @param newTable
-     * @return full NFA including overwritten Table
-     */
-    private NFA setTableAndFinalize(NFA nfa, Set<String>[][] newTable){
-        for(int i = 0; i < newTable.length; i++){
-            for(int j = 0; j < newTable[0].length; j++){
-// FIXME Not sure if this works properly
-                for(String s: newTable[i][j]){
-                    nfa.setTransition(i, s, j);
-                }
-            }
-        }
-        return nfa;
-    }
-
     @Override
     public NFA union(NFA a) {
-        /** Numstates + new starting State **/
+/** Numstates + new starting State **/
         int onionStates = this.numstates + a.getNumStates() + 1;
 
         /** Characters **/
@@ -194,13 +174,7 @@ public class __NFA implements NFA {
         this.initialState = onionInitialState;
         this.transitions = onionTransitions;
 
-        return this;
-        /*
-        NFA onionNFA = setTableAndFinalize(new __NFA(onionStates, onionCharacters, onionAcceptingStates, onionInitialState), onionTransitions);
-        return onionNFA;
-         */
-
-    }
+        return this;    }
 
     @Override
     public NFA intersection(NFA a) {
@@ -214,7 +188,6 @@ public class __NFA implements NFA {
         return (this.complement().union(a)).complement();
     }
 
-    // FIXME had a overwrite
     @Override
     public NFA concat(NFA a) {
         /** New Numstates **/
@@ -250,6 +223,7 @@ public class __NFA implements NFA {
         for(int i = 0; i < a.getTransitions().length; i++){
             for(int j = 0;  j < a.getTransitions()[0].length; j++) {
                 if (!a.getTransitions()[i][j].isEmpty()) {
+                    // FIXME Out of bounds!
                     catTransitions[i + a_offset][j + a_offset] = a.getTransitions()[i][j];
                 }
             }
@@ -266,11 +240,6 @@ public class __NFA implements NFA {
         this.acceptingStates = catAcceptingStates;
         this.initialState = catInitialState;
         return this;
-        /*
-        NFA catNFA = setTableAndFinalize(new __NFA(catNumstates, catCharacters, catAcceptingStates, catInitialState), catTransitions);
-        return catNFA;
-
- */
     }
 
     @Override
@@ -293,10 +262,14 @@ public class __NFA implements NFA {
     public NFA kleeneStar() {
         this.numstates = numstates+1;   // Add Alpha
 
+        // Copy and create new tables
+        Set<String>[][] preKleene = transitions;
+        this.transitions = initializeTransitionTable(numstates);
+
         // Offset on transitions
-        for(int i = 0; i < transitions.length; i++){
-            for(int j = 0; j < transitions[0].length; j++){
-                transitions[i+1][j+1] = transitions[i][j];
+        for(int i = 0; i < preKleene.length; i++){
+            for(int j = 0; j < preKleene[0].length; j++){
+                transitions[i+1][j+1] = preKleene[i][j];
                 if(acceptingStates.contains(i)){
                     transitions[i+1][initialState].add(EPSILON);
                 }
@@ -311,18 +284,18 @@ public class __NFA implements NFA {
 
     @Override
     public NFA plus() {
-// TODO AcceptingStates -> Epsilon to Initial state
+    // AcceptingStates -> Epsilon to Initial state
         for(int i = 0; i < transitions.length; i++){
-            for(Integer a : acceptingStates) {
-
+            if(acceptingStates.contains(i)) {
+                setTransition(i, EPSILON, initialState);
             }
         }
-        return null;
+        return this;
     }
 
+// TODO
     @Override
     public RSA toRSA() {
-// TODO
         // Change of params.
         /** numstates = n^r, n = #states, r = #characters -- In Worst Case**/
         // FIXME
@@ -332,7 +305,7 @@ public class __NFA implements NFA {
         Set<Character> rsaCharacters = new HashSet<>();
         for(Character c: characters){
             // FIXME how the fuck is this done
-            if(c.compareTo(EPSILON.toCharArray()[0]) != 0){
+            if(!c.equals(EPSILON)){
                 // if C != Epsilon -> Add to rsaChars
                 rsaCharacters.add(c);
             }
@@ -389,7 +362,6 @@ public class __NFA implements NFA {
 
     @Override
     public Boolean acceptsNothing() {
-    // FIXME This only assumes true if set is empty.
         if(acceptingStates.isEmpty()) return true;
         else if(acceptsEpsilonOnly() && !acceptsEpsilon()) return true;
         return false;
@@ -412,6 +384,7 @@ public class __NFA implements NFA {
             for(Character c2: characters){
                 superSet.add(c1.toString()+c2.toString());
             }
+        // + Single chars
             superSet.add(c1.toString());
         }
         // If something is accepted, return true.
@@ -455,8 +428,7 @@ public class __NFA implements NFA {
 
     @Override
     public boolean equals(Object b) {
-        // Enable overload to check on equal terms
-        // FIXME -thods below. Not sure if correct
+        // FIXME possible fault in Methods
         if(this instanceof NFA) return equals((NFA) b);
         if(this instanceof DFA) return equals((DFA) b);
         if(this instanceof RSA) return equals((RSA) b);
@@ -484,7 +456,7 @@ public class __NFA implements NFA {
 
     @Override
     public Boolean equalsPlusAndStar() {
-// L* = L+ u {EPSILON}
+        // L* = L+ u {EPSILON}
         return acceptsEpsilon();
     }
 }
