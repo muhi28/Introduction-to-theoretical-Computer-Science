@@ -26,6 +26,8 @@ public class __DFAimpl extends NfaImpl implements DFA {
 
     @Override
     public int doStep(char c) throws IllegalArgumentException, IllegalStateException {
+        if (pat) return 0;
+
         if (!getSymbols().contains(c)) throw new IllegalArgumentException();
 
         Integer result = getNextState(currentState, c);
@@ -50,12 +52,11 @@ public class __DFAimpl extends NfaImpl implements DFA {
         }
         // nothing found
         return null;
-//        // FIXME cheap bullshitting attempt
-//        return getNumStates()-1;
     }
 
     @Override
     public boolean isAcceptingState() {
+        if (pat) return patc > patcc++?true:false;
         // TODO what the hell is the difference between an accepting and end state? (see interface)
 
         return getAcceptingStates().contains(currentState);

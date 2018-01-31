@@ -11,6 +11,10 @@ public class PatternExpr {
         this.wildcard = false;
     }
 
+    public void print() {
+        System.out.println("*: "+kleene+", .: "+wildcard+", "+str);
+    }
+
     public PatternExpr() {
         this.wildcard = true;
     }

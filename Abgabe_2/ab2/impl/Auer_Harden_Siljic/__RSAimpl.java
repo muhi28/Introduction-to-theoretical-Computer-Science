@@ -13,18 +13,8 @@ public class __RSAimpl extends __DFAimpl implements RSA {
         super(numStates, characters, acceptingStates, initialState);
     }
 
-//    public __RSAimpl setAcceptingStates(Set<Integer> set) {
-//        FAFactory factory = new FAFactoryImpl();
-//        __RSAimpl rsa = new __RSAimpl(getNumStates(), getSymbols(), set, getInitialState());
-//        rsa.setTransitions(getTransitions());
-//
-//        return rsa;
-//    }
-
     @Override
     public RSA minimize() {
-
-//        System.out.println("Minimize_begin(): "+this.getNumStates());
 
         // INIT
         //
@@ -93,9 +83,7 @@ public class __RSAimpl extends __DFAimpl implements RSA {
         Set<Integer> newAcceptingStates = updateAcceptingStates(newStates);
 
         // REBUILD
-
-        FAFactory factory = new FAFactoryImpl();
-        RSA rsa = factory.createRSA(numStates, getSymbols(), newAcceptingStates, getInitialState());
+        __RSAimpl rsa = new __RSAimpl(numStates, getSymbols(), newAcceptingStates, getInitialState());
 
         // define transitions
         for (int from = 0; from < getTransitions().length; from++) {
@@ -114,25 +102,21 @@ public class __RSAimpl extends __DFAimpl implements RSA {
         }
 
 
-        System.out.println("\nAFTER MINIMALIZATION:");
-        for (int i = 0; i < rsa.getTransitions().length; i++) {
-            for (int n = 0; n < rsa.getTransitions()[0].length; n++) {
-                if (rsa.getTransitions()[i][n].size() > 0 ) System.out.print(rsa.getTransitions()[i][n] + " ");
-                else System.out.print("[_] ");
-            }
-            System.out.println();
-        }
-        System.out.println(rsa.getNumStates()+" states");
-
-
-//        System.out.println("Minimize_end(): "+rsa.getNumStates());
+//        System.out.println("\nAFTER MINIMALIZATION:");
+//        for (int i = 0; i < rsa.getTransitions().length; i++) {
+//            for (int n = 0; n < rsa.getTransitions()[0].length; n++) {
+//                if (rsa.getTransitions()[i][n].size() > 0 ) System.out.print(rsa.getTransitions()[i][n] + " ");
+//                else System.out.print("[_] ");
+//            }
+//            System.out.println();
+//        }
+//        System.out.println(rsa.getNumStates()+" states");
 
         return rsa;
     }
 
     private ArrayList<Tup> getNewStates(ArrayList<Tup> equivTups) {
         ArrayList<Tup> newStates = new ArrayList<>();
-//        int numStates = equivTups.size();
 
         for (int state = 0; state < getTransitions().length; state++) {
             boolean inTup = false;
@@ -143,7 +127,6 @@ public class __RSAimpl extends __DFAimpl implements RSA {
             }
 
             if (!inTup) {
-//                numStates++;
                 newStates.add(new Tup(state, -1));
             }
         }

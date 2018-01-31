@@ -10,6 +10,10 @@ import javafx.util.Pair;
 // TODO: Rename to __NFAimpl pls
 public class NfaImpl implements NFA {
 
+    public boolean pat;
+    public int patc;
+    public int patcc;
+
     private Set<Character> characters;
     private Set<String>[][] transitions;
     private Set<Integer> acceptingStates;
@@ -18,8 +22,8 @@ public class NfaImpl implements NFA {
     public final String EPSILON = "";
 
     // Initializer used by factory
-    public NfaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState)
-    {
+    public NfaImpl(int numStates, Set<Character> characters, Set<Integer> acceptingStates, int initialState) {
+
         this.characters = characters;
         this.acceptingStates = acceptingStates;
         this.initialState= initialState;
@@ -31,10 +35,9 @@ public class NfaImpl implements NFA {
                 this.transitions[i][j] = new TreeSet<>();
             }
         }
-
     }
 
-    // Constructor used for kleeneStar -- FIXME
+    // Constructor used for kleeneStar
     public NfaImpl(Set<Character> characters, Set<String>[][] transitions, int initialState) {
         this.characters = characters;
         this.transitions = transitions;
@@ -84,7 +87,6 @@ public class NfaImpl implements NFA {
             if (!characters.contains(c)) throw new IllegalCharacterException();
         }
         transitions[fromState][toState].add(s);
-
     }
 
     @Override
@@ -93,7 +95,6 @@ public class NfaImpl implements NFA {
 
         // Clear S from each state
         for (int i=0; i<transitions[0].length; i++) {
-            //Redundant check on null-sets
             transitions[fromState][i].remove(s);
         }
     }
@@ -103,17 +104,38 @@ public class NfaImpl implements NFA {
         if (state < 0 || state >= this.getNumStates()) throw new IllegalStateException("geta nita");
         if (s.length() > 0 && !this.characters.contains(s.toCharArray()[0])) throw new IllegalCharacterException();
 
-        return getNextStatesStep(new TreeSet<>(), new TreeSet<>(), state, s);
+        return getNextStatesStep(new ArrayList<>(), new TreeSet<>(), state, s, new TreeSet<>());
     }
 
     // FIXME check if this is really correct(should avoid endless recursions now though)
-    private Set<Integer> getNextStatesStep(Set<Integer> history, Set<Integer> results, int state, String s) {
+    private Set<Integer> getNextStatesStep(ArrayList<Integer> history, Set<Integer> results, int state, String s, Set<Integer> block) {
         // add this state to history
         history.add(state);
-        if (s.length() == 0) results.add(state);
-        for (int to=0; to<getNumStates(); to++) {
+        if (s.length() == 0) {
+            results.add(state);
+        }
+
+        // shuffle order of next states to avoid endless recursions
+        // if it's stupid but it works...
+        ArrayList<Integer> nexts = new ArrayList<>();
+        for (int to = 0; to < getNumStates(); to++) nexts.add(to);
+        long seed = System.nanoTime();
+        Collections.shuffle(nexts, new Random(seed));
+
+        ArrayList<Integer> nextsE = new ArrayList<>();
+        for (int i=0; i<nexts.size(); i++) {
+            if (transitions[state][i].contains(EPSILON)) {
+                nexts.remove(i);
+                nextsE.add(i);
+            }
+        }
+        nexts.addAll(nextsE);
+
+
+
+        for (Integer to: nexts) {
             // ignore next states that were already visited in this branch if word was already read completely
-            if (history.contains(to) && s.length()==0) {
+            if (history.contains(to) && s.length()==0) {// || block.contains(to)) {
                 continue;
             }
 
@@ -121,7 +143,7 @@ public class NfaImpl implements NFA {
                 // if this transition is possible with current s
                 if (s.startsWith(sym)) {
                     // remove this transition's symbol(s) from s and continue recursion with remaining part
-                    results.addAll(getNextStatesStep(history, results, to, s.substring(sym.length())));
+                    results.addAll(getNextStatesStep(history, results, to, s.substring(sym.length()), block));
                 }
             }
         }
@@ -206,7 +228,6 @@ public class NfaImpl implements NFA {
 
     @Override
     public NFA intersection(NFA a) {
-//        return (this.complement().union(a.complement())).complement();
         return (this.complement().union(a.complement()));
     }
 
@@ -240,8 +261,6 @@ public class NfaImpl implements NFA {
         }
 
         NfaImpl newNfa = new NfaImpl(newSize, chars, a.getAcceptingStates(), this.getInitialState());
-
-        //NfaImpl newNfa = new NfaImpl(chars, newTransitions, this.initialState);
 
         // Setup Concat of T1 and T2 -- Acceptors of T1 point to Starters of T2
         for (Integer fromState: this.getAcceptingStates()) {
@@ -404,10 +423,9 @@ public class NfaImpl implements NFA {
                             stateMap.add(new Pair<>(to, currentAtomicState));
 
                             if (getAcceptingStates().contains(to)) {
-                                atomicAcceptingStates.add(currentAtomicState); // ???
+                                atomicAcceptingStates.add(currentAtomicState);
                             }
 
-                            // FIXME maybe after currentState++ below?
                             currentAtomicState = currentState;
                         }
                     }
@@ -430,14 +448,14 @@ public class NfaImpl implements NFA {
             }
         }
 
-        System.out.println("\nAFTER ATOMIC:");
-        for (int i = 0; i < finalTransitions.length; i++) {
-            for (int n = 0; n < finalTransitions[0].length; n++) {
-                if (finalTransitions[i][n].size() > 0 ) System.out.print(finalTransitions[i][n] + " ");
-                else System.out.print("[_] ");
-            }
-            System.out.println();
-        }
+//        System.out.println("\nAFTER ATOMIC:");
+//        for (int i = 0; i < finalTransitions.length; i++) {
+//            for (int n = 0; n < finalTransitions[0].length; n++) {
+//                if (finalTransitions[i][n].size() > 0 ) System.out.print(finalTransitions[i][n] + " ");
+//                else System.out.print("[_] ");
+//            }
+//            System.out.println();
+//        }
 
         return new Pair<>(finalTransitions, atomicAcceptingStates);
     }
@@ -506,15 +524,14 @@ public class NfaImpl implements NFA {
 
     private RSA toRSA(boolean switchAcceptingStates) {
 
-        System.out.println("\nBEFORE:");
-        for (int i = 0; i < transitions.length; i++) {
-            for (int n = 0; n < transitions[0].length; n++) {
-                if (transitions[i][n].size() > 0 ) System.out.print(transitions[i][n] + " ");
-                else System.out.print("[_] ");
-            }
-            System.out.println();
-        }
-
+//        System.out.println("\nBEFORE:");
+//        for (int i = 0; i < transitions.length; i++) {
+//            for (int n = 0; n < transitions[0].length; n++) {
+//                if (transitions[i][n].size() > 0 ) System.out.print(transitions[i][n] + " ");
+//                else System.out.print("[_] ");
+//            }
+//            System.out.println();
+//        }
 
         // split up non-atomic transitions
         Pair<Set<String>[][], Set<Integer>> atomicData = getAtomicTransitions();
@@ -549,7 +566,6 @@ public class NfaImpl implements NFA {
                 boolean dup = false;
 
                 for (Pair<Integer, Set<Integer>> pair: allGroups) {
-//                    if (containsAll(pair.getValue(),nextPair.getValue()) ||
                     if (pair.getValue().containsAll(nextPair.getValue()) ||
                             pair.getValue().equals(nextPair.getValue())) {
                         toId = pair.getKey();
@@ -557,7 +573,6 @@ public class NfaImpl implements NFA {
                     }
                 }
                 for (Pair<Integer, Set<Integer>> pair: remaining) {
-//                    if (containsAll(pair.getValue(), nextPair.getValue()) ||
                     if (pair.getValue().containsAll(nextPair.getValue()) ||
                             pair.getValue().equals(nextPair.getValue())) {
                         toId = pair.getKey();
@@ -601,7 +616,6 @@ public class NfaImpl implements NFA {
 
                 boolean hasTransition = false;
                 for (int to = 0; to < finalTransitions.length; to++) {
-//                    System.out.println();
                     if (finalTransitions[from][to].contains(symStr)) {
                         hasTransition = true;
                         break;
@@ -636,19 +650,17 @@ public class NfaImpl implements NFA {
             newAcceptingStates = switchedAcceptingStates;
         }
 
-        System.out.println("new accepting states: "+newAcceptingStates);
-
         __RSAimpl rsa = new __RSAimpl(finalTransitions.length, this.characters, newAcceptingStates, 0);
         rsa.setTransitions(finalTransitions);
 
-        System.out.println("\nAFTER RSA:");
-        for (int i = 0; i < finalTransitions.length; i++) {
-            for (int n = 0; n < finalTransitions[0].length; n++) {
-                if (finalTransitions[i][n].size() > 0 ) System.out.print(finalTransitions[i][n] + " ");
-                else System.out.print("[_] ");
-            }
-            System.out.println();
-        }
+//        System.out.println("\nAFTER RSA:");
+//        for (int i = 0; i < finalTransitions.length; i++) {
+//            for (int n = 0; n < finalTransitions[0].length; n++) {
+//                if (finalTransitions[i][n].size() > 0 ) System.out.print(finalTransitions[i][n] + " ");
+//                else System.out.print("[_] ");
+//            }
+//            System.out.println();
+//        }
 
         return rsa;
     }
@@ -675,7 +687,6 @@ public class NfaImpl implements NFA {
         }
 
         return false;
-
     }
 
     @Override
@@ -755,7 +766,7 @@ public class NfaImpl implements NFA {
     @Override
     public Boolean subSetOf(NFA a) {
 //        if (!a.getSymbols().containsAll(this.characters)) return false;
-
+//
 //        for (int f=0; f<this.transitions.length; f++) {
 //            for (int t=0; t<this.transitions[0].length; t++) {
 //                Set<String> s = a.getTransitions()[f][t];
@@ -774,6 +785,12 @@ public class NfaImpl implements NFA {
 
     @Override
     public boolean equals(Object b) {
+//        if (getid()!=null && ((NfaImpl)b).getid()!=null && getid() != ((NfaImpl)b).getid()) return false;
+
         return true;
+//        NFA other = (NFA)b;
+//
+//        RSA inv = (RSA)other.complement();
+//        return inv.intersection(this).acceptsEpsilon();
     }
 }
