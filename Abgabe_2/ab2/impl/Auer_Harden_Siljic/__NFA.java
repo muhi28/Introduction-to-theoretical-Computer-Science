@@ -378,39 +378,73 @@ public class __NFA implements NFA {
 
     @Override
     public Boolean accepts(String w) throws IllegalCharacterException {
-//        if(!getSymbols().contains(w)) throw new IllegalCharacterException();
-        return false;
+        RSA rsa = this.toRSA();
+        for(Character c : w.toCharArray()){
+            rsa.doStep(c);
+        }
+
+        if(rsa.getAcceptingStates().contains(rsa.getActState())) return true;
+        else return false;
     }
 
     @Override
     public Boolean acceptsNothing() {
     // FIXME This only assumes true if set is empty.
         if(acceptingStates.isEmpty()) return true;
+        else if(!acceptsEpsilonOnly() && !acceptsEpsilon()) return true;
         return false;
     }
 
     @Override
     public Boolean acceptsEpsilonOnly() {
-// TODO
-        return null;
+        if(acceptsEpsilon() && !testAcceptance()) return true;
+        else return false;
+    }
+
+    /**
+     * Generate inline-Tests to determine whether this accepts Epsilon only or not.
+     * @return true if some word in Alphabet has been accepted
+     */
+    private boolean testAcceptance() {
+        Set<String> superSet = new HashSet<>();
+        // Kreuzprodukt über alle möglichen Charaktere.
+        for(Character c1 : characters){
+            for(Character c2: characters){
+                superSet.add(c1.toString()+c2.toString());
+            }
+            superSet.add(c1.toString());
+        }
+        // If something is accepted, return true.
+        for(String s : superSet){
+            if(this.accepts(s)) return true;
+        }
+        return false;
+
     }
 
     @Override
     public Boolean acceptsEpsilon() {
-// TODO
-        return null;
+        if(accepts(EPSILON)) return true;
+        else return false;
+
     }
 
     @Override
     public Boolean isInfinite() {
-// TODO
-       return null;
+        // Taken from master
+        for (int from = 0; from < transitions.length; from++) {
+            for (int to = 0; to < transitions[0].length; to++) {
+                if (transitions[from][to].size() > 0) {
+                    if (from >= to) return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
     public Boolean isFinite() {
-// TODO
-        return null;
+        return !isInfinite();
     }
 
     @Override
@@ -422,7 +456,7 @@ public class __NFA implements NFA {
     @Override
     public boolean equals(Object b) {
         // Enable overload to check on equal terms
-     // FIXME -thods below. Not sure if correct
+        // FIXME -thods below. Not sure if correct
         if(this instanceof NFA) return equals((NFA) b);
         if(this instanceof DFA) return equals((DFA) b);
         if(this instanceof RSA) return equals((RSA) b);
@@ -450,7 +484,7 @@ public class __NFA implements NFA {
 
     @Override
     public Boolean equalsPlusAndStar() {
-// TODO L* = L+ u {EPSILON}
+// L* = L+ u {EPSILON}
         return acceptsEpsilon();
     }
 }
